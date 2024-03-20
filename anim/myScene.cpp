@@ -19,6 +19,9 @@
 #include <util/util.h>
 #include <GLModel/GLModel.h>
 #include "anim.h"
+#include "Spline.h"
+#include "Character.h"
+#include "DrawingSimulator.h"
 #include "animTcl.h"
 #include "myScene.h"
 #include "SampleParticle.h"
@@ -95,18 +98,20 @@ void MakeScene(void)
 	bool success;
 
 	// register a system
-	SampleParticle* sphere1 = new SampleParticle( "sphere1" );
+	Spline* spline1 = new Spline("hermite");
+	Character* char1 = new Character("artist", spline1);
 
-	success = GlobalResourceManager::use()->addSystem( sphere1, true );
+	success = GlobalResourceManager::use()->addSystem(spline1, true );
+	assert( success );
 
-	// make sure it was registered successfully
+	success = GlobalResourceManager::use()->addSystem(char1, true );
 	assert( success );
 
 	// register a simulator
-	SampleGravitySimulator* gravitySimulator = 
-		new SampleGravitySimulator( "gravity", sphere1 );
+	DrawingSimulator* drawSim = 
+		new DrawingSimulator("drawsim", char1, spline1);
 
-	success = GlobalResourceManager::use()->addSimulator( gravitySimulator );
+	success = GlobalResourceManager::use()->addSimulator( drawSim );
 
 	// make sure it was registered successfully
 	assert( success );
@@ -120,16 +125,19 @@ void MakeScene(void)
 
 	// retrieve the system
 	sampleSystemRetrieval = 
-		GlobalResourceManager::use()->getSystem( "sphere1" );
+		GlobalResourceManager::use()->getSystem( "hermite" );
+	assert( sampleSystemRetrieval );
 
-	// make sure you got it
+
+	sampleSystemRetrieval = 
+		GlobalResourceManager::use()->getSystem( "artist" );
 	assert( sampleSystemRetrieval );
 
 	BaseSimulator* sampleSimulatorRetrieval;
 
 	// retrieve the simulator
 	sampleSimulatorRetrieval = 
-		GlobalResourceManager::use()->getSimulator( "gravity" );
+		GlobalResourceManager::use()->getSimulator( "drawsim" );
 
 	// make sure you got it
 	assert( sampleSimulatorRetrieval );

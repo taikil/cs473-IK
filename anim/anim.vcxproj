@@ -98,12 +98,17 @@
     <ClCompile Include="animTcl.cpp" />
     <ClCompile Include="BaseObject.cpp" />
     <ClCompile Include="BaseSimulator.cpp" />
+    <ClCompile Include="Character.cpp" />
+    <ClCompile Include="ControlPoint.cpp" />
+    <ClCompile Include="DrawingSimulator.cpp" />
     <ClCompile Include="GlobalResourceManager.cpp" />
+    <ClCompile Include="Hermite.cpp" />
     <ClCompile Include="myScene.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SampleGravitySimulator.cpp" />
     <ClCompile Include="SampleParticle.cpp" />
     <ClCompile Include="BaseSystem.cpp" />
+    <ClCompile Include="Spline.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseSystem.h" />
@@ -111,11 +116,16 @@
     <ClInclude Include="animTcl.h" />
     <ClInclude Include="BaseObject.h" />
     <ClInclude Include="BaseSimulator.h" />
+    <ClInclude Include="Character.h" />
+    <ClInclude Include="ControlPoint.h" />
+    <ClInclude Include="DrawingSimulator.h" />
     <ClInclude Include="GlobalResourceManager.h" />
+    <ClInclude Include="Hermite.h" />
     <ClInclude Include="myScene.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SampleGravitySimulator.h" />
     <ClInclude Include="SampleParticle.h" />
+    <ClInclude Include="Spline.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GLModel\GLModel.vcxproj">
