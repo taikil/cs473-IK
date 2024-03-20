@@ -66,7 +66,7 @@ void Character::rotate(glm::dvec3 axis, double angleDegrees)
 {
 	// Reset to base orientation
 	glm::quat baseOrientation = glm::angleAxis(glm::radians(270.0), glm::dvec3(1, 0, 0));
-		//glm::angleAxis(glm::radians(180.0), glm::dvec3(0, 1, 0));
+	//glm::angleAxis(glm::radians(180.0), glm::dvec3(0, 1, 0));
 	m_rot = baseOrientation;
 
 	glm::quat rotationQuat = glm::angleAxis(glm::radians(angleDegrees), glm::normalize(-axis));
@@ -174,23 +174,98 @@ int Character::command(int argc, myCONST_SPEC char** argv)
 
 }	// Character::command
 
+void Character::drawCircleOutline(float r, int num_segments) {
+	glBegin(GL_LINE_LOOP);
+	glLineWidth(3.0f);
+	for (int i = 0; i < num_segments; i++) {
+		float theta = 2.0f * 3.1415926f * float(i) / float(num_segments);
+		float x = r * cosf(theta);
+		float y = r * sinf(theta);
+		glVertex3f(x, y, 0);
+	}
+	glEnd();
+}
+
+void Character::drawBody() {
+	glPushMatrix();
+	{
+		glScaled(1, 2, 1.0);
+		drawCircleOutline(1.0, 20);
+	}
+	glPopMatrix();
+
+	// Head
+	glPushMatrix();
+	{
+		glTranslated(0, 2.5, 0);
+		drawCircleOutline(0.5, 20);
+	}
+	glPopMatrix();
+}
+
+void Character::drawArms() {
+	for (int i = 0; i < 1; i++) {
+		glPushMatrix();
+		{
+			glTranslated(1.666, 1.5, 0);
+			glPushMatrix();
+			{
+				glScaled(1.0, 0.2, 0);
+				drawCircleOutline(1.0, 20);
+			}
+			glPopMatrix();
+			glTranslated(2, 0, 0);
+			glPushMatrix();
+			{
+				glScaled(1.0, 0.2, 0);
+				drawCircleOutline(1.0, 20);
+			}
+			glPopMatrix();
+		}
+		glPopMatrix();
+	}
+}
+
 void Character::display(GLenum mode)
 {
 	glEnable(GL_LIGHTING);
 	glMatrixMode(GL_MODELVIEW);
+	glEnable(GL_COLOR_MATERIAL);
+	glColor3f(0.5, 0.1, 0.7);
 	glPushMatrix();
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glTranslated(m_pos[0], m_pos[1], m_pos[2]);
 	glScalef(m_sx, m_sy, m_sz);
-	//glRotated(180, 0, 1, 0);
-	//glRotated(270, 1, 0, 0);
 	glm::mat4 rotationMatrix = glm::mat4_cast(m_rot);
 	glMultMatrixf(glm::value_ptr(rotationMatrix));
 
-	if (m_model.numvertices > 0)
-		glmDraw(&m_model, GLM_SMOOTH | GLM_MATERIAL);
-	else
-		glutSolidSphere(1.0, 20, 20);
+	glPushMatrix();
+	{
+		// Body
+		drawBody();
+
+		//Right Arm
+		//Left Arm
+		glPushMatrix();
+		{
+			glTranslated(-1.666, 1.5, 0);
+			glPushMatrix();
+			{
+				glScaled(1.0, 0.2, 0);
+				drawCircleOutline(1.0, 20);
+			}
+			glPopMatrix();
+			glTranslated(-2, 0, 0);
+			glPushMatrix();
+			{
+				glScaled(1.0, 0.2, 0);
+				drawCircleOutline(1.0, 20);
+			}
+			glPopMatrix();
+		}
+		glPopMatrix();
+	}
+	glPopMatrix();
 
 	glPopMatrix();
 	glPopAttrib();
