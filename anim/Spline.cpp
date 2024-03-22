@@ -333,25 +333,6 @@ glm::dvec3 Spline::getCarPosition(double& velocity, double timeStep, double& dis
 	//distance += velocity * timeStep;
 	double t = getTfromSecant(distance);
 	t = std::max(0.0, std::min(t, 1.0));
-
-	if (t < 0.1) {
-
-		velocity = easeIn(t);
-
-		//distance += velocity * timeStep;
-
-		// Recalculate t based on the new distance
-		t = getTfromSecant(distance);
-	}
-	else if (t > 0.9) {
-		velocity = easeOut(t);
-
-		//distance += velocity * timeStep;
-
-		// Recalculate t based on the new distance
-		t = getTfromSecant(distance);
-	}
-
 	int i = t * numPoints;
 	i = std::max(0, std::min(i, static_cast<int>(numPoints - 1)));
 	ControlPoint p0 = points[i];

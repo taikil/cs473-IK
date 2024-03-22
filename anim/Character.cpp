@@ -8,28 +8,16 @@ Character::Character(const std::string& name, Spline* spline) :
 	m_pos(0, 0, 0),
 	m_spline(spline)  // Add a member variable to store the spline
 {
-	glm::quat rotationQuatI = glm::angleAxis(glm::radians(0.0), glm::dvec3(1, 0, 0)); // 90 degrees about i-axis
-	//glm::quat rotationQuatJ = glm::angleAxis(glm::radians(0.0), glm::dvec3(0, 1, 0)); // 180 degrees about j-axis
-
-	// Combine the rotations
-	//m_rot = rotationQuatJ * rotationQuatI;
-	m_rot = rotationQuatI;
-
 	m_model.ReadOBJ("../Build/data/f-16.obj");
 	glmUnitize(&m_model);
 	glmFacetNormals(&m_model);
 	glmVertexNormals(&m_model, 90);
-	armPos[0][0] = -1.666;
-	armPos[0][1] = -2.0;
-	armPos[1][0] = 1.666;
-	armPos[1][1] = 2.0;
+	armPos << -1.666, -2.0, -1.4,
+		1.666, 2.0, 1.4;
 }	// Character
 
 void Character::getState(double* p)
 {
-	// Assuming p is a pointer to a double array of size 3
-	//glm::dvec3 position;
-	//BaseSystem::getState(glm::value_ptr(position)); // Call the base class implementation
 
 	// Convert glm::dvec3 to double array
 	p[0] = m_pos.x;
@@ -40,11 +28,8 @@ void Character::getState(double* p)
 void Character::setState(double* p)
 {
 	glm::dvec3 position(p[0], p[1], p[2]);
-	//m_pos = position;
 	translate(position);
 
-	// Call the base class implementation
-	//BaseSystem::setState(glm::value_ptr(position));
 
 }	// Character::setState
 
@@ -52,31 +37,20 @@ void Character::reset(double time)
 {
 	double p[3] = { 0,0,0 };
 	setState(p);
-	glm::quat rotationQuatI = glm::angleAxis(glm::radians(270.0), glm::dvec3(1, 0, 0)); // 90 degrees about i-axis
-	glm::quat rotationQuatJ = glm::angleAxis(glm::radians(180.0), glm::dvec3(0, 1, 0)); // 180 degrees about j-axis
-	//m_rot = rotationQuatJ * rotationQuatI;
-	m_rot = rotationQuatI;
 
 }	// Character::Reset
 
 
 void Character::translate(glm::dvec3 translation) {
 	m_pos = translation;
-	//glTranslated(ranslation[0], translation[1], translation[2]);
 }
 
 void Character::rotate(glm::dvec3 axis, double angleDegrees)
 {
 	// Reset to base orientation
-	glm::quat baseOrientation = glm::angleAxis(glm::radians(270.0), glm::dvec3(1, 0, 0));
-	//glm::angleAxis(glm::radians(180.0), glm::dvec3(0, 1, 0));
-	m_rot = baseOrientation;
 
-	glm::quat rotationQuat = glm::angleAxis(glm::radians(angleDegrees), glm::normalize(-axis));
 
-	m_rot = rotationQuat * m_rot;
 
-	m_rot = glm::normalize(m_rot);
 }
 
 
@@ -206,22 +180,110 @@ void Character::drawBody() {
 	glPopMatrix();
 }
 
+void Character::drawLegs() {
+	//Left Leg
+	glPushMatrix();
+	{
+		glTranslated(-0.5, -2.666, 0);
+		glPushMatrix();
+		{
+			glScaled(0.2, 1.0, 0);
+			drawCircleOutline(1.0, 20);
+		}
+		glPopMatrix();
+		glPushMatrix();
+		{
+			glTranslated(0, -2.0, 0);
+			glPushMatrix();
+			{
+				glScaled(0.2, 1.0, 0);
+				drawCircleOutline(1.0, 20);
+			}
+			glPopMatrix();
+			//Foot
+			glPushMatrix();
+			{
+				glTranslated(0, -1.2, 0);
+				glPushMatrix();
+				{
+					glScaled(0.4, 0.2, 0);
+					drawCircleOutline(1.0, 20);
+				}
+				glPopMatrix();
+			}
+			glPopMatrix();
+		}
+		glPopMatrix();
+	}
+	glPopMatrix();
+	//Right Leg
+	glPushMatrix();
+	{
+		glTranslated(0.5, -2.666, 0);
+		glPushMatrix();
+		{
+			glScaled(0.2, 1.0, 0);
+			drawCircleOutline(1.0, 20);
+		}
+		glPopMatrix();
+		glPushMatrix();
+		{
+			glTranslated(0, -2.0, 0);
+			glPushMatrix();
+			{
+				glScaled(0.2, 1.0, 0);
+				drawCircleOutline(1.0, 20);
+			}
+			glPopMatrix();
+			//Foot
+			glPushMatrix();
+			{
+				glTranslated(0, -1.2, 0);
+				glPushMatrix();
+				{
+					glScaled(0.4, 0.2, 0);
+					drawCircleOutline(1.0, 20);
+				}
+				glPopMatrix();
+			}
+			glPopMatrix();
+		}
+		glPopMatrix();
+	}
+	glPopMatrix();
+}
+
 void Character::drawArms() {
 	for (int i = 0; i < 2; i++) {
 		glPushMatrix();
 		{
-			glTranslated(armPos[i][0], 1.5, 0);
+			glTranslated(armPos(i, 0), 1.5, 0);
 			glPushMatrix();
 			{
 				glScaled(1.0, 0.2, 0);
 				drawCircleOutline(1.0, 20);
 			}
 			glPopMatrix();
-			glTranslated(armPos[i][1], 0, 0);
 			glPushMatrix();
 			{
-				glScaled(1.0, 0.2, 0);
-				drawCircleOutline(1.0, 20);
+				glTranslated(armPos(i, 1), 0, 0);
+				glPushMatrix();
+				{
+					glScaled(1.0, 0.2, 0);
+					drawCircleOutline(1.0, 20);
+				}
+				glPopMatrix();
+				glPushMatrix();
+				{
+					glTranslated(armPos(i, 2), 0, 0);
+					glPushMatrix();
+					{
+						glScaled(0.4, 0.25, 0);
+						drawCircleOutline(1.0, 20);
+					}
+					glPopMatrix();
+				}
+				glPopMatrix();
 			}
 			glPopMatrix();
 		}
@@ -239,16 +301,17 @@ void Character::display(GLenum mode)
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glTranslated(m_pos[0], m_pos[1], m_pos[2]);
 	glScalef(m_sx, m_sy, m_sz);
-	glm::mat4 rotationMatrix = glm::mat4_cast(m_rot);
-	glMultMatrixf(glm::value_ptr(rotationMatrix));
+	//glm::mat4 rotationMatrix = glm::mat4_cast(m_rot);
+	//glMultMatrixf(glm::value_ptr(rotationMatrix));
 
 	glPushMatrix();
 	{
-		// Body
 		drawBody();
 
-		//Right Arm
 		drawArms();
+
+		drawLegs();
+
 	}
 	glPopMatrix();
 

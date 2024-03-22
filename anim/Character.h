@@ -9,10 +9,14 @@
 #include <util/util.h>
 #include "animTcl.h"
 #include "Spline.h"
-#include <GLmodel/GLmodel.h>
-#include <vector>
 
+#ifdef Success
+#undef Success
+#endif
 #include <Eigen/Dense>
+
+#include <GLmodel/GLmodel.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -40,6 +44,7 @@ public:
 	void drawCircleOutline(float r, int num_segments);
 	void drawBody();
 	void drawArms();
+	void drawLegs();
 
 protected:
 
@@ -47,16 +52,11 @@ protected:
 	float m_sy;
 	float m_sz;
 
-	glm::quat m_rot; // Quaternion for rotation
 	glm::dvec3 m_pos;
 
+	Eigen::Matrix<float, 2, 3> armPos;
+	Eigen::Matrix<float, 2, 3> legPos;
 
-
-	//float armPos[2][2] = {
-	//{-1.666f, 2.0f},
-	//{1.666f, 2.0f}
-	//};
-	glm::mat2 armPos;
 	GLMmodel m_model;
 	Spline* m_spline;
 
