@@ -12,6 +12,7 @@
 #include <GLmodel/GLmodel.h>
 #include <vector>
 
+#include <Eigen/Dense>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -33,7 +34,7 @@ public:
 
 	void display(GLenum mode = GL_RENDER);
 
-    void readModel(const char* fname);
+	void readModel(const char* fname);
 	void flipNormals(void) { glmReverseWinding(&m_model); }
 	int command(int argc, myCONST_SPEC char** argv);
 	void drawCircleOutline(float r, int num_segments);
@@ -49,8 +50,12 @@ protected:
 	glm::quat m_rot; // Quaternion for rotation
 	glm::dvec3 m_pos;
 
-	
 
+
+	//float armPos[2][2] = {
+	//{-1.666f, 2.0f},
+	//{1.666f, 2.0f}
+	//};
 	glm::mat2 armPos;
 	GLMmodel m_model;
 	Spline* m_spline;

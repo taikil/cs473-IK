@@ -8,18 +8,21 @@ Character::Character(const std::string& name, Spline* spline) :
 	m_pos(0, 0, 0),
 	m_spline(spline)  // Add a member variable to store the spline
 {
-	glm::quat rotationQuatI = glm::angleAxis(glm::radians(270.0), glm::dvec3(1, 0, 0)); // 90 degrees about i-axis
-	glm::quat rotationQuatJ = glm::angleAxis(glm::radians(180.0), glm::dvec3(0, 1, 0)); // 180 degrees about j-axis
+	glm::quat rotationQuatI = glm::angleAxis(glm::radians(0.0), glm::dvec3(1, 0, 0)); // 90 degrees about i-axis
+	//glm::quat rotationQuatJ = glm::angleAxis(glm::radians(0.0), glm::dvec3(0, 1, 0)); // 180 degrees about j-axis
 
 	// Combine the rotations
-	m_rot = rotationQuatJ * rotationQuatI;
-	//m_rot = rotationQuatI;
+	//m_rot = rotationQuatJ * rotationQuatI;
+	m_rot = rotationQuatI;
 
-	//m_model.ReadOBJ("../Build/data/porsche.obj");
 	m_model.ReadOBJ("../Build/data/f-16.obj");
 	glmUnitize(&m_model);
 	glmFacetNormals(&m_model);
 	glmVertexNormals(&m_model, 90);
+	armPos[0][0] = -1.666;
+	armPos[0][1] = -2.0;
+	armPos[1][0] = 1.666;
+	armPos[1][1] = 2.0;
 }	// Character
 
 void Character::getState(double* p)
@@ -204,17 +207,17 @@ void Character::drawBody() {
 }
 
 void Character::drawArms() {
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 2; i++) {
 		glPushMatrix();
 		{
-			glTranslated(1.666, 1.5, 0);
+			glTranslated(armPos[i][0], 1.5, 0);
 			glPushMatrix();
 			{
 				glScaled(1.0, 0.2, 0);
 				drawCircleOutline(1.0, 20);
 			}
 			glPopMatrix();
-			glTranslated(2, 0, 0);
+			glTranslated(armPos[i][1], 0, 0);
 			glPushMatrix();
 			{
 				glScaled(1.0, 0.2, 0);
@@ -245,25 +248,7 @@ void Character::display(GLenum mode)
 		drawBody();
 
 		//Right Arm
-		//Left Arm
-		glPushMatrix();
-		{
-			glTranslated(-1.666, 1.5, 0);
-			glPushMatrix();
-			{
-				glScaled(1.0, 0.2, 0);
-				drawCircleOutline(1.0, 20);
-			}
-			glPopMatrix();
-			glTranslated(-2, 0, 0);
-			glPushMatrix();
-			{
-				glScaled(1.0, 0.2, 0);
-				drawCircleOutline(1.0, 20);
-			}
-			glPopMatrix();
-		}
-		glPopMatrix();
+		drawArms();
 	}
 	glPopMatrix();
 
