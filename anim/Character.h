@@ -55,7 +55,7 @@ protected:
 	glm::dvec3 m_pos;
 
 	Eigen::Matrix<float, 2, 3> armPos;
-	Eigen::Matrix<float, 2, 3> legPos;
+	Eigen::Matrix<float, 3, 3> legPos;
 
 	GLMmodel m_model;
 	Spline* m_spline;

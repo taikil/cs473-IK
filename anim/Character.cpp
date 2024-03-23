@@ -14,6 +14,9 @@ Character::Character(const std::string& name, Spline* spline) :
 	glmVertexNormals(&m_model, 90);
 	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
+	legPos << -0.5, 0.0, 0.0,
+		0.5, 0.0, 0.0,
+		-2.666, -2.0, -1.2;
 }	// Character
 
 void Character::getState(double* p)
@@ -181,114 +184,50 @@ void Character::drawBody() {
 }
 
 void Character::drawLegs() {
-	//Left Leg
-	glPushMatrix();
-	{
-		glTranslated(-0.5, -2.666, 0);
+	for (int i = 0; i < 2; i++) {
 		glPushMatrix();
-		{
-			glScaled(0.2, 1.0, 0);
-			drawCircleOutline(1.0, 20);
-		}
-		glPopMatrix();
-		glPushMatrix();
-		{
-			glTranslated(0, -2.0, 0);
+		for (int j = 0; j < 3; j++) {
 			glPushMatrix();
 			{
-				glScaled(0.2, 1.0, 0);
-				drawCircleOutline(1.0, 20);
-			}
-			glPopMatrix();
-			//Foot
-			glPushMatrix();
-			{
-				glTranslated(0, -1.2, 0);
+				glTranslated(legPos(i, j), legPos(2, j), 0);
 				glPushMatrix();
 				{
-					glScaled(0.4, 0.2, 0);
+					j == 2 ? glScaled(0.4, 0.2, 0) : glScaled(0.2, 1.0, 0);
 					drawCircleOutline(1.0, 20);
 				}
 				glPopMatrix();
 			}
-			glPopMatrix();
 		}
+		glPopMatrix();
+		glPopMatrix();
 		glPopMatrix();
 	}
 	glPopMatrix();
-	//Right Leg
-	glPushMatrix();
-	{
-		glTranslated(0.5, -2.666, 0);
-		glPushMatrix();
-		{
-			glScaled(0.2, 1.0, 0);
-			drawCircleOutline(1.0, 20);
-		}
-		glPopMatrix();
-		glPushMatrix();
-		{
-			glTranslated(0, -2.0, 0);
-			glPushMatrix();
-			{
-				glScaled(0.2, 1.0, 0);
-				drawCircleOutline(1.0, 20);
-			}
-			glPopMatrix();
-			//Foot
-			glPushMatrix();
-			{
-				glTranslated(0, -1.2, 0);
-				glPushMatrix();
-				{
-					glScaled(0.4, 0.2, 0);
-					drawCircleOutline(1.0, 20);
-				}
-				glPopMatrix();
-			}
-			glPopMatrix();
-		}
-		glPopMatrix();
-	}
 	glPopMatrix();
 }
 
 void Character::drawArms() {
 	for (int i = 0; i < 2; i++) {
 		glPushMatrix();
-		{
-			glTranslated(armPos(i, 0), 1.5, 0);
+		for (int j = 0; j < 3; j++) {
 			glPushMatrix();
 			{
-				glScaled(1.0, 0.2, 0);
-				drawCircleOutline(1.0, 20);
-			}
-			glPopMatrix();
-			glPushMatrix();
-			{
-				glTranslated(armPos(i, 1), 0, 0);
+				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
 				glPushMatrix();
 				{
-					glScaled(1.0, 0.2, 0);
+					j != 2 ? glRotated(PI / 3, 1, 1, 1) : void(0);
+					j == 2 ? glScaled(0.4, 0.25, 0) : glScaled(1.0, 0.2, 0);
 					drawCircleOutline(1.0, 20);
 				}
 				glPopMatrix();
-				glPushMatrix();
-				{
-					glTranslated(armPos(i, 2), 0, 0);
-					glPushMatrix();
-					{
-						glScaled(0.4, 0.25, 0);
-						drawCircleOutline(1.0, 20);
-					}
-					glPopMatrix();
-				}
-				glPopMatrix();
 			}
-			glPopMatrix();
 		}
 		glPopMatrix();
+		glPopMatrix();
+		glPopMatrix();
 	}
+	glPopMatrix();
+	glPopMatrix();
 }
 
 void Character::display(GLenum mode)
