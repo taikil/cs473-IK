@@ -213,9 +213,11 @@ void Character::drawArms() {
 			glPushMatrix();
 			{
 				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
+				Eigen::Vector3f distance;
+				distance = Eigen::Vector3f(i == 0 ? -1.0 : 1.0, 0, 0);
+				rotateFromBase(i == 0 ? 45 : -45, 0, 1, 0, distance);
 				glPushMatrix();
 				{
-					j != 2 ? glRotated(PI / 3, 1, 1, 1) : void(0);
 					j == 2 ? glScaled(0.4, 0.25, 0) : glScaled(1.0, 0.2, 0);
 					drawCircleOutline(1.0, 20);
 				}
@@ -228,6 +230,12 @@ void Character::drawArms() {
 	}
 	glPopMatrix();
 	glPopMatrix();
+}
+
+void Character::rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance) {
+	glTranslatef(-distance.x(), -distance.y(), -distance.z());
+	glRotatef(angle, x, y, z);
+	glTranslatef(distance.x(), distance.y(), distance.z());
 }
 
 void Character::display(GLenum mode)

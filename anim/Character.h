@@ -41,6 +41,7 @@ public:
 	void readModel(const char* fname);
 	void flipNormals(void) { glmReverseWinding(&m_model); }
 	int command(int argc, myCONST_SPEC char** argv);
+	void rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance);
 	void drawCircleOutline(float r, int num_segments);
 	void drawBody();
 	void drawArms();
@@ -56,6 +57,8 @@ protected:
 
 	Eigen::Matrix<float, 2, 3> armPos;
 	Eigen::Matrix<float, 3, 3> legPos;
+
+	Eigen::Matrix<float, 3, 7> jacobian;
 
 	GLMmodel m_model;
 	Spline* m_spline;
