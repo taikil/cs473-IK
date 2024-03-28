@@ -14,6 +14,7 @@ Character::Character(const std::string& name, Spline* spline) :
 	glmVertexNormals(&m_model, 90);
 	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
+	armLen << 1.0, 1.0, 0.4;
 	legPos << -0.5, 0.0, 0.0,
 		0.5, 0.0, 0.0,
 		-2.666, -2.0, -1.2;
@@ -214,8 +215,9 @@ void Character::drawArms() {
 			{
 				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
 				Eigen::Vector3f distance;
-				distance = Eigen::Vector3f(i == 0 ? -1.0 : 1.0, 0, 0);
-				rotateFromBase(i == 0 ? 45 : -45, 0, 1, 0, distance);
+				distance = Eigen::Vector3f(i == 0 ? -armLen[j] : armLen[j], 0, 0);
+				float rotation = i == 0 ? -30 : 30;
+				rotateFromBase(rotation, 0, 1, 0, distance);
 				glPushMatrix();
 				{
 					j == 2 ? glScaled(0.4, 0.25, 0) : glScaled(1.0, 0.2, 0);
@@ -235,8 +237,42 @@ void Character::drawArms() {
 void Character::rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance) {
 	glTranslatef(-distance.x(), -distance.y(), -distance.z());
 	glRotatef(angle, x, y, z);
+	//x == 1 ? rotationX(angle) : void(0);
+	//y == 1 ? rotationY(angle) : void(0);
+	//z == 1 ? rotationZ(angle) : void(0);
 	glTranslatef(distance.x(), distance.y(), distance.z());
 }
+
+// Function to create 4x4 rotation matrix around X-axis (roll)
+Eigen::Matrix4d Character::rotationX(float angle) {
+	Eigen::Matrix4d rotX = Eigen::Matrix4d::Identity();
+	rotX.block<3, 3>(0, 0) << 1, 0, 0,
+		0, cos(angle), -sin(angle),
+		0, sin(angle), cos(angle);
+	//glMultMatrixd(rotX.data());
+	return rotX;
+}
+
+// Function to create 4x4 rotation matrix around Y-axis (pitch)
+Eigen::Matrix4d  Character::rotationY(float angle) {
+	Eigen::Matrix4d rotY = Eigen::Matrix4d::Identity();
+	rotY.block<3, 3>(0, 0) << cos(angle), 0, sin(angle),
+		0, 1, 0,
+		-sin(angle), 0, cos(angle);
+	//glMultMatrixd(rotY.data());
+	return rotY;
+}
+
+// Function to create 4x4 rotation matrix around Z-axis (yaw)
+Eigen::Matrix4d Character::rotationZ(float angle) {
+	Eigen::Matrix4d rotZ = Eigen::Matrix4d::Identity();
+	rotZ.block<3, 3>(0, 0) << cos(angle), -sin(angle), 0,
+		sin(angle), cos(angle), 0,
+		0, 0, 1;
+	//glMultMatrixd(rotZ.data());
+	return rotZ;
+}
+
 
 void Character::display(GLenum mode)
 {

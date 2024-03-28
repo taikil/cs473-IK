@@ -47,6 +47,11 @@ public:
 	void drawArms();
 	void drawLegs();
 
+
+	Eigen::Matrix4d rotationX(float angle);
+	Eigen::Matrix4d rotationY(float angle);
+	Eigen::Matrix4d rotationZ(float angle);
+
 protected:
 
 	float m_sx;
@@ -56,8 +61,11 @@ protected:
 	glm::dvec3 m_pos;
 
 	Eigen::Matrix<float, 2, 3> armPos;
+	Eigen::Vector3<float> armLen;
 	Eigen::Matrix<float, 3, 3> legPos;
 
+	//Arm Length: 1.0, 1.0, 0.4
+	//Start Position = 
 	Eigen::Matrix<float, 3, 7> jacobian;
 
 	GLMmodel m_model;
