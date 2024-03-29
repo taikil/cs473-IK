@@ -17,7 +17,7 @@ Character::Character(const std::string& name, Spline* spline) :
 	armLen << 1.0, 1.0, 0.4;
 	legPos << -0.5, 0.0, 0.0,
 		0.5, 0.0, 0.0,
-		-2.666, -2.0, -1.2;
+		-2.666, -2.0, -1.0;
 }	// Character
 
 void Character::getState(double* p)
@@ -193,6 +193,7 @@ void Character::drawLegs() {
 				glTranslated(legPos(i, j), legPos(2, j), 0);
 				glPushMatrix();
 				{
+					if (j == 2) rotateFromBase(-90, 1, 0, 0, Eigen::Vector3f(0, 0.1, 0));
 					j == 2 ? glScaled(0.4, 0.2, 0) : glScaled(0.2, 1.0, 0);
 					drawCircleOutline(1.0, 20);
 				}
@@ -321,13 +322,13 @@ Eigen::MatrixXf Character::computeJacobian(const std::vector<float>& theta) {
 		// Fill in the corresponding column of the Jacobian matrix **
 		jacobian.col(i) = dEndEffectorPos_dTheta.head<3>();
 	}
-
 	return jacobian;
 }
 
 Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian, Eigen::VectorXf p) {
 	Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
-	//Eigen::VectorXf x = lu.solve(b);
+	Eigen::VectorXf x = lu.solve(p);
+	return x;
 }
 
 
@@ -346,6 +347,7 @@ void Character::display(GLenum mode)
 
 	glPushMatrix();
 	{
+		glTranslated(0, 0, 3.0);
 		drawBody();
 
 		drawArms();

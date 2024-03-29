@@ -67,6 +67,7 @@ public:
 	int load(const std::string& filename);
 	void readModel(const char* fname) { m_model.ReadOBJ(fname); }
 	void flipNormals(void) { glmReverseWinding(&m_model); }
+	void drawBoard();
 	int command(int argc, myCONST_SPEC char** argv);
 
 protected:

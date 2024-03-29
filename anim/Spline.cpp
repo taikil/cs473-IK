@@ -630,6 +630,35 @@ void Spline::displayPoints(float r) {
 	}
 }
 
+void drawSquare(float x, float y, float z, float length) {
+	float halfLen = length / 2.0f;
+
+	float x1 = x - halfLen;
+	float x2 = x + halfLen;
+	float y1 = y - halfLen;
+	float y2 = y + halfLen;
+
+	// Draw the square
+	glBegin(GL_QUADS);
+	glVertex3f(x1, y1, z);
+	glVertex3f(x2, y1, z);
+	glVertex3f(x2, y2, z);
+	glVertex3f(x1, y2, z);
+	glEnd();
+}
+
+
+void Spline::drawBoard() {
+	glColor3f(1.0, 1.0, 1.0);
+	drawSquare(0, 2.0, -0.1, 16.0);
+	glColor3f(0.0, 0.3, 0.15);
+	glPushMatrix();
+	{
+		glScaled(1.5, 1, 0);
+		drawSquare(0, 0.0, 0.0, 5);
+	}
+	glPopMatrix();
+}
 
 void Spline::display(GLenum mode)
 {
@@ -640,6 +669,7 @@ void Spline::display(GLenum mode)
 	glEnable(GL_COLOR_MATERIAL);
 
 	glTranslated(0, 0, 0);
+	drawBoard();
 
 	displayPoints(5.0f);
 
