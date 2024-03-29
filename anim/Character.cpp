@@ -208,6 +208,12 @@ void Character::drawLegs() {
 }
 
 void Character::drawArms() {
+	glPushMatrix();
+	glTranslated(5.46, 1.5, 0);
+	glScaled(0.1, 0.1, 0.1);
+	glutSolidSphere(1, 20, 20);
+	glPopMatrix();
+
 	for (int i = 0; i < 2; i++) {
 		glPushMatrix();
 		for (int j = 0; j < 3; j++) {
@@ -216,7 +222,7 @@ void Character::drawArms() {
 				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
 				Eigen::Vector3f distance;
 				distance = Eigen::Vector3f(i == 0 ? -armLen[j] : armLen[j], 0, 0);
-				float rotation = i == 0 ? -30 : 30;
+				float rotation = i == 0 ? -0 : 0;
 				rotateFromBase(rotation, 0, 1, 0, distance);
 				glPushMatrix();
 				{
@@ -243,9 +249,8 @@ void Character::rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f
 	glTranslatef(distance.x(), distance.y(), distance.z());
 }
 
-// Function to create 4x4 rotation matrix around X-axis (roll)
-Eigen::Matrix4d Character::rotationX(float angle) {
-	Eigen::Matrix4d rotX = Eigen::Matrix4d::Identity();
+Eigen::Matrix4f Character::rotationX(float angle) {
+	Eigen::Matrix4f rotX = Eigen::Matrix4f::Identity();
 	rotX.block<3, 3>(0, 0) << 1, 0, 0,
 		0, cos(angle), -sin(angle),
 		0, sin(angle), cos(angle);
@@ -253,24 +258,76 @@ Eigen::Matrix4d Character::rotationX(float angle) {
 	return rotX;
 }
 
-// Function to create 4x4 rotation matrix around Y-axis (pitch)
-Eigen::Matrix4d  Character::rotationY(float angle) {
-	Eigen::Matrix4d rotY = Eigen::Matrix4d::Identity();
+Eigen::Matrix4f Character::rotationY(float angle) {
+	Eigen::Matrix4f rotY = Eigen::Matrix4f::Identity();
 	rotY.block<3, 3>(0, 0) << cos(angle), 0, sin(angle),
 		0, 1, 0,
 		-sin(angle), 0, cos(angle);
-	//glMultMatrixd(rotY.data());
 	return rotY;
 }
 
-// Function to create 4x4 rotation matrix around Z-axis (yaw)
-Eigen::Matrix4d Character::rotationZ(float angle) {
-	Eigen::Matrix4d rotZ = Eigen::Matrix4d::Identity();
+Eigen::Matrix4f Character::rotationZ(float angle) {
+	Eigen::Matrix4f rotZ = Eigen::Matrix4f::Identity();
 	rotZ.block<3, 3>(0, 0) << cos(angle), -sin(angle), 0,
 		sin(angle), cos(angle), 0,
 		0, 0, 1;
-	//glMultMatrixd(rotZ.data());
 	return rotZ;
+}
+
+Eigen::Matrix4f Character::rotationXDerivative(float angle) {
+	Eigen::Matrix4f rotX = Eigen::Matrix4f::Identity();
+	rotX.block<3, 3>(0, 0) << 1, 0, 0,
+		0, -sin(angle), -cos(angle),
+		0, cos(angle), -sin(angle);
+	//glMultMatrixd(rotX.data());
+	return rotX;
+}
+
+Eigen::Matrix4f Character::rotationYDerivative(float angle) {
+	Eigen::Matrix4f rotY = Eigen::Matrix4f::Identity();
+	rotY.block<3, 3>(0, 0) << -sin(angle), 0, cos(angle),
+		0, 1, 0,
+		-cos(angle), 0, -sin(angle);
+	return rotY;
+}
+
+Eigen::Matrix4f Character::rotationZDerivative(float angle) {
+	Eigen::Matrix4f rotZ = Eigen::Matrix4f::Identity();
+	rotZ.block<3, 3>(0, 0) << -sin(angle), -cos(angle), 0,
+		cos(angle), -sin(angle), 0,
+		0, 0, 1;
+	return rotZ;
+}
+
+Eigen::MatrixXf Character::computeJacobian(const std::vector<float>& theta) {
+	int numThetas = theta.size();
+	Eigen::MatrixXf jacobian(3, numThetas);
+
+	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
+
+	// Compute the Jacobian matrix
+	for (int i = 0; i < numThetas; ++i) {
+		if (i == 0 || i == 3) // x-axis rotation
+			transformation *= rotationX(theta[i]);
+		else if (i % 7 == 1 || i == 4 || i == 5) // y-axis rotation
+			transformation *= rotationY(theta[i]);
+		else if (i % 7 == 2) // z-axis rotation
+			transformation *= rotationZ(theta[i]);
+		Eigen::Vector4f endEffectorPos = transformation * Eigen::Vector4f::Zero();
+
+		// Compute the derivative of end effector position w.r.t. the current joint angle
+		Eigen::Vector4f dEndEffectorPos_dTheta = transformation * rotationXDerivative(theta[i]) * Eigen::Vector4f::Zero();
+
+		// Fill in the corresponding column of the Jacobian matrix **
+		jacobian.col(i) = dEndEffectorPos_dTheta.head<3>();
+	}
+
+	return jacobian;
+}
+
+Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian, Eigen::VectorXf p) {
+	Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
+	//Eigen::VectorXf x = lu.solve(b);
 }
 
 

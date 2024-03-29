@@ -48,9 +48,14 @@ public:
 	void drawLegs();
 
 
-	Eigen::Matrix4d rotationX(float angle);
-	Eigen::Matrix4d rotationY(float angle);
-	Eigen::Matrix4d rotationZ(float angle);
+	Eigen::Matrix4f rotationX(float angle);
+	Eigen::Matrix4f rotationY(float angle);
+	Eigen::Matrix4f rotationZ(float angle);
+	Eigen::Matrix4f rotationXDerivative(float angle);
+	Eigen::Matrix4f rotationYDerivative(float angle);
+	Eigen::Matrix4f rotationZDerivative(float angle);
+	Eigen::MatrixXf computeJacobian(const std::vector<float>& theta);
+	Eigen::MatrixXf pseudoinverse(Eigen::MatrixXf jacobian, Eigen::VectorXf p);
 
 protected:
 
