@@ -1,6 +1,6 @@
 #include "DrawingSimulator.h"
 
-DrawingSimulator::DrawingSimulator(const std::string& name, BaseSystem* target, Spline* spline) :
+DrawingSimulator::DrawingSimulator(const std::string& name, BaseSystem* target, Hermite* spline) :
 	BaseSimulator(name),
 	m_object(target),
 	m_spline(spline)  // Add a member variable to store the spline
@@ -27,23 +27,43 @@ int DrawingSimulator::step(double time) // 0.01s
         prevSec = time;
     }
     // Use the Spline class to get the car's position along the spline
-    glm::dvec3 carPosition = m_spline->getCarPosition(velocity, timeStep, distance); // seperated them to compute velocity 
-    glm::dvec3 carRotation = m_spline->getTangents(velocity, timeStep, distance);
 
-    if (glm::length(carPosition) > 0.0) {
-        // Calculate the rotation angle in degrees based on the arctangent of the tangent vector components
-        double rotationAngleDegrees = glm::degrees(atan2(carRotation.x, carRotation.y));
-
-        // Rotate the car around the vertical axis based on the calculated angle
-        static_cast<Character*>(m_object)->rotate(glm::dvec3(0, 0, 1), rotationAngleDegrees);
-    }
 
     // Update the car's position using the translate function
-    static_cast<Character*>(m_object)->translate(carPosition);
 
     // Assuming the car has a setState function to update its internal state
     //m_object->setState(pos);
 
     return 0;
+
+}
+
+int DrawingSimulator::command(int argc, myCONST_SPEC char** argv)
+{
+	if (argc < 1)
+	{
+		animTcl::OutputMessage("system %s: wrong number of params.", m_name.c_str());
+		return TCL_ERROR;
+	}
+	else if (strcmp(argv[0], "read") == 0)
+	{
+		if (argc == 2)
+		{
+			m_spline->loadFromFile2D(argv[1]);
+		}
+		else
+		{
+			animTcl::OutputMessage("Usage: Unable to read text file");
+			return TCL_ERROR;
+
+		}
+	}
+	else if (strcmp(argv[0], "reset") == 0)
+	{
+		reset(0);
+	}
+
+	glutPostRedisplay();
+	return TCL_OK;
 
 }

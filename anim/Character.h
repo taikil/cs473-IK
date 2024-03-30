@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <util/util.h>
 #include "animTcl.h"
-#include "Spline.h"
+#include "Hermite.h"
 
 #ifdef Success
 #undef Success
@@ -28,7 +28,7 @@ class Character : public BaseSystem
 {
 
 public:
-	Character(const std::string& name, Spline* spline);
+	Character(const std::string& name);
 	virtual void getState(double* p);
 	virtual void setState(double* p);
 	void reset(double time);
@@ -39,7 +39,7 @@ public:
 	void display(GLenum mode = GL_RENDER);
 
 	void readModel(const char* fname);
-	void flipNormals(void) { glmReverseWinding(&m_model); }
+	void Character::drawBoard();
 	int command(int argc, myCONST_SPEC char** argv);
 	void rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance);
 	void drawCircleOutline(float r, int num_segments);
@@ -74,7 +74,6 @@ protected:
 	Eigen::Matrix<float, 3, 7> jacobian;
 
 	GLMmodel m_model;
-	Spline* m_spline;
 
 };
 #endif

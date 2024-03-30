@@ -19,8 +19,8 @@
 #include <util/util.h>
 #include <GLModel/GLModel.h>
 #include "anim.h"
-#include "Spline.h"
 #include "Character.h"
+#include "Hermite.h"
 #include "DrawingSimulator.h"
 #include "animTcl.h"
 #include "myScene.h"
@@ -98,10 +98,11 @@ void MakeScene(void)
 	bool success;
 
 	// register a system
-	Spline* spline1 = new Spline("hermite");
-	Character* char1 = new Character("artist", spline1);
+	Hermite* hermiteSystem;
+	hermiteSystem = new Hermite("hermite");
+	Character* char1 = new Character("artist");
 
-	success = GlobalResourceManager::use()->addSystem(spline1, true );
+	success = GlobalResourceManager::use()->addSystem(hermiteSystem, true );
 	assert( success );
 
 	success = GlobalResourceManager::use()->addSystem(char1, true );
@@ -109,7 +110,7 @@ void MakeScene(void)
 
 	// register a simulator
 	DrawingSimulator* drawSim = 
-		new DrawingSimulator("drawsim", char1, spline1);
+		new DrawingSimulator("iksim", char1, hermiteSystem);
 
 	success = GlobalResourceManager::use()->addSimulator( drawSim );
 
@@ -137,7 +138,7 @@ void MakeScene(void)
 
 	// retrieve the simulator
 	sampleSimulatorRetrieval = 
-		GlobalResourceManager::use()->getSimulator( "drawsim" );
+		GlobalResourceManager::use()->getSimulator( "iksim" );
 
 	// make sure you got it
 	assert( sampleSimulatorRetrieval );

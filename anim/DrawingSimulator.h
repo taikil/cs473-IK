@@ -5,7 +5,7 @@
 #include "BaseSimulator.h"
 #include "BaseSystem.h"
 #include "Character.h"
-#include "Spline.h"
+#include "Hermite.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -20,7 +20,7 @@ class DrawingSimulator : public BaseSimulator
 {
 public:
 
-	DrawingSimulator(const std::string& name, BaseSystem* target, Spline* spline);
+	DrawingSimulator(const std::string& name, BaseSystem* target, Hermite* spline);
 	~DrawingSimulator();
 
 	int step(double time);
@@ -33,7 +33,7 @@ public:
 		return 0;
 	};
 
-	int command(int argc, myCONST_SPEC char** argv) { return TCL_OK; }
+	int command(int argc, myCONST_SPEC char** argv);
 
 protected:
 
@@ -48,6 +48,6 @@ protected:
 	double distance = 0;
 
 	BaseSystem* m_object;
-	Spline* m_spline;
+	Hermite* m_spline;
 
 };

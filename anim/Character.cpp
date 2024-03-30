@@ -1,12 +1,11 @@
 #include "Character.h"
 
-Character::Character(const std::string& name, Spline* spline) :
+Character::Character(const std::string& name) :
 	BaseSystem(name),
 	m_sx(1.0f),
 	m_sy(1.0f),
 	m_sz(1.0f),
-	m_pos(0, 0, 0),
-	m_spline(spline)  // Add a member variable to store the spline
+	m_pos(0, 0, 0)
 {
 	m_model.ReadOBJ("../Build/data/f-16.obj");
 	glmUnitize(&m_model);
@@ -72,34 +71,6 @@ int Character::command(int argc, myCONST_SPEC char** argv)
 		animTcl::OutputMessage("system %s: wrong number of params.", m_name.c_str());
 		return TCL_ERROR;
 	}
-	else if (strcmp(argv[0], "read") == 0)
-	{
-		if (argc == 2)
-		{
-			readModel(argv[1]);
-			return TCL_OK;
-		}
-		else
-		{
-			animTcl::OutputMessage("Usage: read <file_name>");
-			return TCL_ERROR;
-		}
-	}
-	else if (strcmp(argv[0], "scale") == 0)
-	{
-		if (argc == 4)
-		{
-			m_sx = (float)atof(argv[1]);
-			m_sy = (float)atof(argv[2]);
-			m_sz = (float)atof(argv[3]);
-		}
-		else
-		{
-			animTcl::OutputMessage("Usage: scale <sx> <sy> <sz> ");
-			return TCL_ERROR;
-
-		}
-	}
 	else if (strcmp(argv[0], "translate") == 0)
 	{
 		if (argc == 4)
@@ -113,38 +84,6 @@ int Character::command(int argc, myCONST_SPEC char** argv)
 
 		}
 	}
-	else if (strcmp(argv[0], "rotate") == 0)
-	{
-		if (argc == 5) // Need to pass axis and three rotation parameters
-		{
-			rotate(glm::dvec3(atof(argv[1]), atof(argv[2]), atof(argv[3])), atof(argv[4]));
-		}
-		else
-		{
-			animTcl::OutputMessage("Usage: rotate <axis_i> <axis_j> <axis_k> <angle_degrees>");
-			return TCL_ERROR;
-
-		}
-	}
-	else if (strcmp(argv[0], "flipNormals") == 0)
-	{
-		flipNormals();
-		return TCL_OK;
-
-	}
-	else if (strcmp(argv[0], "load") == 0)
-	{
-		if (argc == 2)
-		{
-			return m_spline->load(argv[1]);
-		}
-		else
-		{
-			animTcl::OutputMessage("Usage: system <name> load \"<file name>\"");
-			return TCL_ERROR;
-		}
-	}
-
 	else if (strcmp(argv[0], "reset") == 0)
 	{
 		reset(0);
@@ -157,7 +96,7 @@ int Character::command(int argc, myCONST_SPEC char** argv)
 
 void Character::drawCircleOutline(float r, int num_segments) {
 	glBegin(GL_LINE_LOOP);
-	glLineWidth(3.0f);
+	glLineWidth(8.0f);
 	for (int i = 0; i < num_segments; i++) {
 		float theta = 2.0f * 3.1415926f * float(i) / float(num_segments);
 		float x = r * cosf(theta);
@@ -331,6 +270,36 @@ Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian, Eigen::Vector
 	return x;
 }
 
+void drawSquare(float x, float y, float z, float length) {
+	float halfLen = length / 2.0f;
+
+	float x1 = x - halfLen;
+	float x2 = x + halfLen;
+	float y1 = y - halfLen;
+	float y2 = y + halfLen;
+
+	// Draw the square
+	glBegin(GL_QUADS);
+	glVertex3f(x1, y1, z);
+	glVertex3f(x2, y1, z);
+	glVertex3f(x2, y2, z);
+	glVertex3f(x1, y2, z);
+	glEnd();
+}
+
+
+void Character::drawBoard() {
+	glColor3f(1.0, 1.0, 1.0);
+	drawSquare(0, 2.0, -0.1, 16.0);
+	glColor3f(0.0, 0.3, 0.15);
+	glPushMatrix();
+	{
+		glScaled(1.5, 1, 0);
+		drawSquare(0, 0.0, 0.0, 5);
+	}
+	glPopMatrix();
+}
+
 
 void Character::display(GLenum mode)
 {
@@ -345,6 +314,11 @@ void Character::display(GLenum mode)
 	//glm::mat4 rotationMatrix = glm::mat4_cast(m_rot);
 	//glMultMatrixf(glm::value_ptr(rotationMatrix));
 
+	glPushMatrix();
+	{
+		drawBoard();
+	}
+	glPopMatrix();
 	glPushMatrix();
 	{
 		glTranslated(0, 0, 3.0);
