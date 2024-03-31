@@ -11,10 +11,12 @@ Character::Character(const std::string& name) :
 	glmUnitize(&m_model);
 	glmFacetNormals(&m_model);
 	glmVertexNormals(&m_model, 90);
-	armPos << -1.666, -2.0, -1.4,
+armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
-	armLen << 1.0, 1.0, 0.4;
-	legPos << -0.5, 0.0, 0.0,
+
+armLen << 1.0, 1.0, 0.4;
+
+legPos << -0.5, 0.0, 0.0,
 		0.5, 0.0, 0.0,
 		-2.666, -2.0, -1.0;
 }	// Character
@@ -162,7 +164,7 @@ void Character::drawArms() {
 				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
 				Eigen::Vector3f distance;
 				distance = Eigen::Vector3f(i == 0 ? -armLen[j] : armLen[j], 0, 0);
-				float rotation = i == 0 ? -0 : 0;
+				float rotation = i == 0 ? 0 : 0; // Right hand positive rotations
 				rotateFromBase(rotation, 0, 1, 0, distance);
 				glPushMatrix();
 				{
@@ -268,6 +270,40 @@ Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian, Eigen::Vector
 	Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
 	Eigen::VectorXf x = lu.solve(p);
 	return x;
+}
+
+void Character::KSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, Eigen::VectorXf& newTheta) {
+	// Calculate the error
+	Eigen::VectorXf err = targetP - currentP;
+
+	// Compute the new joint angles using the provided Jacobian
+	newTheta = currentTheta + 0.1 * J.transpose() * err;
+}
+
+void Character::IKSolver(const std::function<Eigen::MatrixXf()>& calcJ, Eigen::VectorXf& currentTheta, Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, float threshold) {
+	Eigen::VectorXf newTheta;
+	Eigen::MatrixXf J;
+	Eigen::VectorXf err;
+
+	do {
+		// Calculate the error
+		err = targetP - currentP;
+
+		// Update the target position with a step size
+		Eigen::VectorXf pTargetP = 0.1 * err + currentP;
+
+		// Compute the Jacobian matrix using the provided function
+		J = calcJ();
+
+		// Use KSolve to compute the new joint angles
+		KSolve(J, currentTheta, currentP, pTargetP, newTheta);
+
+		// Update the current position and joint angles
+		//currentP = f(newTheta);
+		currentTheta = newTheta;
+
+		// Check if the error is below the threshold
+	} while (err.norm() > threshold);
 }
 
 void drawSquare(float x, float y, float z, float length) {

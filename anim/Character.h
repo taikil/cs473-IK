@@ -56,6 +56,8 @@ public:
 	Eigen::Matrix4f rotationZDerivative(float angle);
 	Eigen::MatrixXf computeJacobian(const std::vector<float>& theta);
 	Eigen::MatrixXf pseudoinverse(Eigen::MatrixXf jacobian, Eigen::VectorXf p);
+	void KSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, Eigen::VectorXf& newTheta);
+	void IKSolver(const std::function<Eigen::MatrixXf()>& calcJ, Eigen::VectorXf& currentTheta, Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, float threshold);
 
 protected:
 
