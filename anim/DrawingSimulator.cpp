@@ -1,8 +1,8 @@
 #include "DrawingSimulator.h"
 
-DrawingSimulator::DrawingSimulator(const std::string& name, BaseSystem* target, Hermite* spline) :
+DrawingSimulator::DrawingSimulator(const std::string& name, Character* target, Hermite* spline) :
 	BaseSimulator(name),
-	m_object(target),
+	character(target),
 	m_spline(spline)  // Add a member variable to store the spline
 {
 }
@@ -26,8 +26,12 @@ int DrawingSimulator::step(double time) // 0.01s
         animTcl::OutputMessage("The simulation time is %.3f, velocity is: %.3f m/s", time, velocity);
         prevSec = time;
     }
-    // Use the Spline class to get the car's position along the spline
 
+
+	std::vector<float> theta;
+	theta.resize(7);
+	std::fill(theta.begin(), theta.end(), 0.0);
+	character->computeJacobian(theta);
 
     // Update the car's position using the translate function
 

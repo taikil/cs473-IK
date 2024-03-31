@@ -75,6 +75,8 @@ protected:
 	Eigen::Vector4<float> Twrist;
 	Eigen::Vector4<float> Phand;
 
+	//std::vector<float> theta;
+
 	Eigen::Matrix<float, 3, 7> jacobian;
 
 

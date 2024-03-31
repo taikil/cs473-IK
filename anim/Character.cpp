@@ -268,17 +268,33 @@ Eigen::MatrixXf Character::computeJacobian(const std::vector<float>& theta) {
 	for (int i = 0; i < numThetas; ++i) {
 		if (i == 0 || i == 3) // x-axis rotation
 			transformation *= rotationX(theta[i]);
-		else if (i % 7 == 1 || i == 4 || i == 5) // y-axis rotation
+		else if (i  == 1 || i == 4 || i == 5) // y-axis rotation
 			transformation *= rotationY(theta[i]);
-		else if (i % 7 == 2) // z-axis rotation
+		else if (i == 2 || i == 6) // z-axis rotation
 			transformation *= rotationZ(theta[i]);
 		Eigen::Vector4f endEffectorPos = transformation * Eigen::Vector4f::Zero();
+
+		// Apply translations
+		if (i == 0) // Troot
+			endEffectorPos += Troot;
+		else if (i == 3) // Telbow
+			endEffectorPos += Troot + Tshoulder;
+		else if (i == 6) // Twrist
+			endEffectorPos += Troot + Tshoulder + Telbow;
 
 		// Compute the derivative of end effector position w.r.t. the current joint angle
 		Eigen::Vector4f dEndEffectorPos_dTheta = transformation * rotationXDerivative(theta[i]) * Eigen::Vector4f::Zero();
 
+		if (i == 0) // Troot
+			dEndEffectorPos_dTheta.head<3>() += Troot.head<3>();
+		else if (i == 3) // Telbow
+			dEndEffectorPos_dTheta.head<3>() += Troot.head<3>() + Tshoulder.head<3>();
+		else if (i == 6) // Twrist
+			dEndEffectorPos_dTheta.head<3>() += Troot.head<3>() + Tshoulder.head<3>() + Telbow.head<3>();
+
 		// Fill in the corresponding column of the Jacobian matrix **
 		jacobian.col(i) = dEndEffectorPos_dTheta.head<3>();
+		animTcl::OutputMessage("Jacobian[%d]: (%f, %f, %f)", i, jacobian(0, i), jacobian(1, i), jacobian(2, i));
 	}
 	return jacobian;
 }

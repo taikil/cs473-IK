@@ -20,14 +20,14 @@ class DrawingSimulator : public BaseSimulator
 {
 public:
 
-	DrawingSimulator(const std::string& name, BaseSystem* target, Hermite* spline);
+	DrawingSimulator(const std::string& name, Character* target, Hermite* spline);
 	~DrawingSimulator();
 
 	int step(double time);
 	int init(double time)
 	{
 		Vector pos;
-		m_object->getState(pos);
+		character->getState(pos);
 		m_pos0 = glm::dvec3(pos[0], pos[1], pos[2]);
 
 		return 0;
@@ -47,7 +47,7 @@ protected:
 	double velocity = 0.1; // m/s (initial)
 	double distance = 0;
 
-	BaseSystem* m_object;
+	Character* character;
 	Hermite* m_spline;
 
 };
