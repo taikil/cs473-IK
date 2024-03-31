@@ -132,7 +132,7 @@ void Character::drawLegs() {
 				glTranslated(legPos(i, j), legPos(2, j), 0);
 				glPushMatrix();
 				{
-					if (j == 2) rotateFromBase(-90, 1, 0, 0, Eigen::Vector3f(0, 0.1, 0));
+					if (j == 2) rotateFromBase(-100, 1, 0, 0, Eigen::Vector3f(0, 0.1, 0));
 					j == 2 ? glScaled(0.4, 0.2, 0) : glScaled(0.2, 1.0, 0);
 					drawCircleOutline(1.0, 20);
 				}
@@ -216,7 +216,7 @@ Eigen::Matrix4f Character::rotationZ(float angle) {
 
 Eigen::Matrix4f Character::rotationXDerivative(float angle) {
 	Eigen::Matrix4f rotX = Eigen::Matrix4f::Identity();
-	rotX.block<3, 3>(0, 0) << 1, 0, 0,
+	rotX.block<3, 3>(0, 0) << 0, 0, 0,
 		0, -sin(angle), -cos(angle),
 		0, cos(angle), -sin(angle);
 	//glMultMatrixd(rotX.data());
@@ -226,7 +226,7 @@ Eigen::Matrix4f Character::rotationXDerivative(float angle) {
 Eigen::Matrix4f Character::rotationYDerivative(float angle) {
 	Eigen::Matrix4f rotY = Eigen::Matrix4f::Identity();
 	rotY.block<3, 3>(0, 0) << -sin(angle), 0, cos(angle),
-		0, 1, 0,
+		0, 0, 0,
 		-cos(angle), 0, -sin(angle);
 	return rotY;
 }
@@ -235,7 +235,7 @@ Eigen::Matrix4f Character::rotationZDerivative(float angle) {
 	Eigen::Matrix4f rotZ = Eigen::Matrix4f::Identity();
 	rotZ.block<3, 3>(0, 0) << -sin(angle), -cos(angle), 0,
 		cos(angle), -sin(angle), 0,
-		0, 0, 1;
+		0, 0, 0;
 	return rotZ;
 }
 
@@ -290,12 +290,20 @@ void drawSquare(float x, float y, float z, float length) {
 
 void Character::drawBoard() {
 	glColor3f(1.0, 1.0, 1.0);
-	drawSquare(0, 2.0, -0.1, 16.0);
+	drawSquare(0, 0.0, -0.1, 12.0);
 	glColor3f(0.0, 0.3, 0.15);
 	glPushMatrix();
 	{
 		glScaled(1.5, 1, 0);
 		drawSquare(0, 0.0, 0.0, 5);
+	}
+	glPopMatrix();
+	glPushMatrix();
+	{
+		glColor3f(0.541, 0.314, 0.039);
+		glTranslatef(0, -6, 5.99);
+		glRotatef(90, 1, 0, 0);
+		drawSquare(0, 0.0, 0.0, 12.0);
 	}
 	glPopMatrix();
 }
@@ -321,7 +329,7 @@ void Character::display(GLenum mode)
 	glPopMatrix();
 	glPushMatrix();
 	{
-		glTranslated(0, 0, 3.0);
+		glTranslated(0, 0, 2.0);
 		drawBody();
 
 		drawArms();

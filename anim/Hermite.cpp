@@ -1051,7 +1051,7 @@ void Hermite::loadFromFile2D(const char* filename)
 	for(int i = 0; i < header.numberOfControlPoints; i++)
 	{
 		_loadControlPoint2D(inFile, x, y);
-		this->addControlPoint(x, y, 0.0);
+		this->addControlPoint(x * 0.6, y * 0.6, 0.0);
 	}
 
 }	// Hermite::loadFromFile2D

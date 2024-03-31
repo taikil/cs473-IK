@@ -49,6 +49,7 @@ int DrawingSimulator::command(int argc, myCONST_SPEC char** argv)
 	{
 		if (argc == 2)
 		{
+			glScalef(0.5, 0.5, 0.5);
 			m_spline->loadFromFile2D(argv[1]);
 		}
 		else
