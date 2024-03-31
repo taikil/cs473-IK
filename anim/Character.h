@@ -28,17 +28,19 @@ class Character : public BaseSystem
 {
 
 public:
+
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 	Character(const std::string& name);
 	virtual void getState(double* p);
 	virtual void setState(double* p);
 	void reset(double time);
 
-	void translate(glm::dvec3 translation);
-	void rotate(glm::dvec3 axis, double angleDegrees);
+	void bob(Eigen::Vector4<float> translation);
+	void rotate(Eigen::Vector3<float> axis, double angleDegrees);
 
 	void display(GLenum mode = GL_RENDER);
 
-	void readModel(const char* fname);
 	void Character::drawBoard();
 	int command(int argc, myCONST_SPEC char** argv);
 	void rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance);
@@ -59,23 +61,22 @@ public:
 	void KSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, Eigen::VectorXf& newTheta);
 	void IKSolver(const std::function<Eigen::MatrixXf()>& calcJ, Eigen::VectorXf& currentTheta, Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, float threshold);
 
+
 protected:
 
-	float m_sx;
-	float m_sy;
-	float m_sz;
-
-	glm::dvec3 m_pos;
-
 	Eigen::Matrix<float, 2, 3> armPos;
+	//Arm Length: 1.0, 1.0, 0.4
 	Eigen::Vector3<float> armLen;
 	Eigen::Matrix<float, 3, 3> legPos;
 
-	//Arm Length: 1.0, 1.0, 0.4
-	//Start Position = 
+	Eigen::Vector4<float> Troot;
+	Eigen::Vector4<float> Tshoulder;
+	Eigen::Vector4<float> Telbow;
+	Eigen::Vector4<float> Twrist;
+	Eigen::Vector4<float> Phand;
+
 	Eigen::Matrix<float, 3, 7> jacobian;
 
-	GLMmodel m_model;
 
 };
 #endif

@@ -2,21 +2,19 @@
 
 Character::Character(const std::string& name) :
 	BaseSystem(name),
-	m_sx(1.0f),
-	m_sy(1.0f),
-	m_sz(1.0f),
-	m_pos(0, 0, 0)
+	Troot(0.0, 0.0, 2.0, 1.0),
+	Tshoulder(0.666, 1.5, 0.0, 1.0),
+	Telbow(2.0, 0.0, 0.0, 1.0),
+	Twrist(2.0, 0.0, 0.0, 1.0),
+	Phand(0.8, 0.0, 0.0, 1.0)
+
 {
-	m_model.ReadOBJ("../Build/data/f-16.obj");
-	glmUnitize(&m_model);
-	glmFacetNormals(&m_model);
-	glmVertexNormals(&m_model, 90);
-armPos << -1.666, -2.0, -1.4,
+	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
 
-armLen << 1.0, 1.0, 0.4;
+	armLen << 1.0, 1.0, 0.4;
 
-legPos << -0.5, 0.0, 0.0,
+	legPos << -0.5, 0.0, 0.0,
 		0.5, 0.0, 0.0,
 		-2.666, -2.0, -1.0;
 }	// Character
@@ -25,15 +23,15 @@ void Character::getState(double* p)
 {
 
 	// Convert glm::dvec3 to double array
-	p[0] = m_pos.x;
-	p[1] = m_pos.y;
-	p[2] = m_pos.z;
+	p[0] = Troot.x();
+	p[1] = Troot.y();
+	p[2] = Troot.z();
 }	 //Character::getState
 
 void Character::setState(double* p)
 {
-	glm::dvec3 position(p[0], p[1], p[2]);
-	translate(position);
+	Eigen::Vector4<float> position(p[0], p[1], p[2], 1);
+	bob(position);
 
 
 }	// Character::setState
@@ -46,25 +44,15 @@ void Character::reset(double time)
 }	// Character::Reset
 
 
-void Character::translate(glm::dvec3 translation) {
-	m_pos = translation;
+void Character::bob(Eigen::Vector4<float> translation) {
+	Troot = translation;
 }
 
-void Character::rotate(glm::dvec3 axis, double angleDegrees)
+void Character::rotate(Eigen::Vector3<float>, double angleDegrees)
 {
-	// Reset to base orientation
-
-
 
 }
 
-
-void Character::readModel(const char* fname)
-{
-	m_model.ReadOBJ(fname);
-	glmFacetNormals(&m_model);
-	glmVertexNormals(&m_model, 90);
-}
 
 int Character::command(int argc, myCONST_SPEC char** argv)
 {
@@ -77,7 +65,7 @@ int Character::command(int argc, myCONST_SPEC char** argv)
 	{
 		if (argc == 4)
 		{
-			translate(glm::dvec3(atof(argv[1]), atof(argv[2]), atof(argv[3])));
+			bob(Eigen::Vector4<float>(atof(argv[1]), atof(argv[2]), atof(argv[3]), 1));
 		}
 		else
 		{
@@ -150,10 +138,39 @@ void Character::drawLegs() {
 }
 
 void Character::drawArms() {
+
 	glPushMatrix();
-	glTranslated(5.46, 1.5, 0);
+
+	glPushMatrix();
 	glScaled(0.1, 0.1, 0.1);
 	glutSolidSphere(1, 20, 20);
+	glPopMatrix();
+
+	glTranslated(Tshoulder.x(), Tshoulder.y(), Tshoulder.z());
+	glPushMatrix();
+	glScaled(0.1, 0.1, 0.1);
+	glutSolidSphere(1, 20, 20);
+	glPopMatrix();
+
+	glTranslated(Telbow.x(), Telbow.y(), Telbow.z());
+	glPushMatrix();
+	glScaled(0.1, 0.1, 0.1);
+	glutSolidSphere(1, 20, 20);
+	glPopMatrix();
+
+
+	glTranslated(Twrist.x(), Twrist.y(), Twrist.z());
+	glPushMatrix();
+	glScaled(0.1, 0.1, 0.1);
+	glutSolidSphere(1, 20, 20);
+	glPopMatrix();
+
+	glTranslated(Phand.x(), Phand.y(), Phand.z());
+	glPushMatrix();
+	glScaled(0.1, 0.1, 0.1);
+	glutSolidSphere(1, 20, 20);
+	glPopMatrix();
+
 	glPopMatrix();
 
 	for (int i = 0; i < 2; i++) {
@@ -353,10 +370,8 @@ void Character::display(GLenum mode)
 	glColor3f(0.5, 0.1, 0.7);
 	glPushMatrix();
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glTranslated(m_pos[0], m_pos[1], m_pos[2]);
-	glScalef(m_sx, m_sy, m_sz);
-	//glm::mat4 rotationMatrix = glm::mat4_cast(m_rot);
-	//glMultMatrixf(glm::value_ptr(rotationMatrix));
+
+
 
 	glPushMatrix();
 	{
@@ -365,7 +380,7 @@ void Character::display(GLenum mode)
 	glPopMatrix();
 	glPushMatrix();
 	{
-		glTranslated(0, 0, 2.0);
+		glTranslated(Troot.x(), Troot.y(), Troot.z());
 		drawBody();
 
 		drawArms();
