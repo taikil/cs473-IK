@@ -9,6 +9,8 @@ Character::Character(const std::string& name) :
 	Phand(0.8, 0.0, 0.0, 1.0)
 
 {
+
+	currentTheta << 0, 0, 0, 0, 0, 0, 0; 
 	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
 
@@ -258,7 +260,7 @@ Eigen::Matrix4f Character::rotationZDerivative(float angle) {
 	return rotZ;
 }
 
-Eigen::MatrixXf Character::computeJacobian(const std::vector<float>& theta) {
+Eigen::MatrixXf Character::computeJacobian(const Eigen::MatrixXf theta) {
 	int numThetas = theta.size();
 	Eigen::MatrixXf jacobian(3, numThetas);
 
@@ -299,43 +301,53 @@ Eigen::MatrixXf Character::computeJacobian(const std::vector<float>& theta) {
 	return jacobian;
 }
 
-Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian, Eigen::VectorXf p) {
+Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian) {
 	Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
-	Eigen::VectorXf x = lu.solve(p);
+	Eigen::VectorXf x = lu.solve(jacobian);
 	return x;
 }
 
-void Character::KSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, Eigen::VectorXf& newTheta) {
+void Character::IKSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::Vector3f& currentP, const Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
 	// Calculate the error
-	Eigen::VectorXf err = targetP - currentP;
+	Eigen::Vector3f err = targetP - currentP;
 
-	// Compute the new joint angles using the provided Jacobian
 	newTheta = currentTheta + 0.1 * J.transpose() * err;
+	IKSolver(targetP, err);
 }
 
-void Character::IKSolver(const std::function<Eigen::MatrixXf()>& calcJ, Eigen::VectorXf& currentTheta, Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, float threshold) {
-	Eigen::VectorXf newTheta;
-	Eigen::MatrixXf J;
-	Eigen::VectorXf err;
+void Character::IKSolver(const Eigen::VectorXf& targetP, Eigen::Vector3f err)
+{
+	// Initialize current joint angles
+	float threshold = 0.1;
+	// Initialize current end effector position
+	Eigen::VectorXf currentP(3);
+	currentP << Phand.x(), Phand.y(), Phand.z(); 
 
+	// Compute Jacobian matrix
+	Eigen::MatrixXf J = computeJacobian(currentTheta);
+
+	// Start iterative IK solver
 	do {
-		// Calculate the error
-		err = targetP - currentP;
+		// Compute pseudoinverse of Jacobian
+		Eigen::MatrixXf J_pseudo =
+		pseudoinverse(J);
 
-		// Update the target position with a step size
-		Eigen::VectorXf pTargetP = 0.1 * err + currentP;
+		// Compute error vector
+		Eigen::VectorXf err = targetP - currentP;
 
-		// Compute the Jacobian matrix using the provided function
-		J = calcJ();
+		// Compute change in joint angles
+		Eigen::VectorXf dTheta = 0.1 * J_pseudo * err;
 
-		// Use KSolve to compute the new joint angles
-		KSolve(J, currentTheta, currentP, pTargetP, newTheta);
+		// Update joint angles
+		currentTheta += dTheta;
 
-		// Update the current position and joint angles
-		//currentP = f(newTheta);
-		currentTheta = newTheta;
+		// Compute new end effector position
+		currentP = Troot.head<3>(); // Assuming only the translation part of Troot contributes to end effector position
 
-		// Check if the error is below the threshold
+		// Recompute Jacobian with updated joint angles
+		J = computeJacobian(currentTheta);
+
+		// Check convergence condition
 	} while (err.norm() > threshold);
 }
 

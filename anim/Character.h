@@ -56,10 +56,11 @@ public:
 	Eigen::Matrix4f rotationXDerivative(float angle);
 	Eigen::Matrix4f rotationYDerivative(float angle);
 	Eigen::Matrix4f rotationZDerivative(float angle);
-	Eigen::MatrixXf computeJacobian(const std::vector<float>& theta);
-	Eigen::MatrixXf pseudoinverse(Eigen::MatrixXf jacobian, Eigen::VectorXf p);
-	void KSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, Eigen::VectorXf& newTheta);
-	void IKSolver(const std::function<Eigen::MatrixXf()>& calcJ, Eigen::VectorXf& currentTheta, Eigen::VectorXf& currentP, const Eigen::VectorXf& targetP, float threshold);
+	Eigen::MatrixXf computeJacobian(const Eigen::MatrixXf theta);
+	Eigen::MatrixXf pseudoinverse(Eigen::MatrixXf jacobian);
+	void Character::IKSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::Vector3f& currentP, const Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta);
+	void Character::IKSolver(const Eigen::VectorXf& targetP, Eigen::Vector3f err);
+
 
 
 protected:
@@ -74,6 +75,8 @@ protected:
 	Eigen::Vector4<float> Telbow;
 	Eigen::Vector4<float> Twrist;
 	Eigen::Vector4<float> Phand;
+
+	Eigen::VectorXf currentTheta;
 
 	//std::vector<float> theta;
 
