@@ -9,8 +9,6 @@ Character::Character(const std::string& name) :
 	Phand(0.8, 0.0, 0.0, 1.0)
 
 {
-
-	currentTheta << 0, 0, 0, 0, 0, 0, 0; 
 	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
 
@@ -24,10 +22,9 @@ Character::Character(const std::string& name) :
 void Character::getState(double* p)
 {
 
-	// Convert glm::dvec3 to double array
-	p[0] = Troot.x();
-	p[1] = Troot.y();
-	p[2] = Troot.z();
+	p[0] = Phand.x();
+	p[1] = Phand.y();
+	p[2] = Phand.z();
 }	 //Character::getState
 
 void Character::setState(double* p)
@@ -269,11 +266,11 @@ Eigen::MatrixXf Character::computeJacobian(const Eigen::MatrixXf theta) {
 	// Compute the Jacobian matrix
 	for (int i = 0; i < numThetas; ++i) {
 		if (i == 0 || i == 3) // x-axis rotation
-			transformation *= rotationX(theta[i]);
+			transformation *= rotationX(theta(i));
 		else if (i  == 1 || i == 4 || i == 5) // y-axis rotation
-			transformation *= rotationY(theta[i]);
+			transformation *= rotationY(theta(i));
 		else if (i == 2 || i == 6) // z-axis rotation
-			transformation *= rotationZ(theta[i]);
+			transformation *= rotationZ(theta(i));
 		Eigen::Vector4f endEffectorPos = transformation * Eigen::Vector4f::Zero();
 
 		// Apply translations
@@ -285,7 +282,7 @@ Eigen::MatrixXf Character::computeJacobian(const Eigen::MatrixXf theta) {
 			endEffectorPos += Troot + Tshoulder + Telbow;
 
 		// Compute the derivative of end effector position w.r.t. the current joint angle
-		Eigen::Vector4f dEndEffectorPos_dTheta = transformation * rotationXDerivative(theta[i]) * Eigen::Vector4f::Zero();
+		Eigen::Vector4f dEndEffectorPos_dTheta = transformation * rotationXDerivative(theta(i)) * Eigen::Vector4f::Zero();
 
 		if (i == 0) // Troot
 			dEndEffectorPos_dTheta.head<3>() += Troot.head<3>();
@@ -307,48 +304,65 @@ Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian) {
 	return x;
 }
 
-void Character::IKSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::Vector3f& currentP, const Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
-	// Calculate the error
-	Eigen::Vector3f err = targetP - currentP;
+void Character::IKSolver(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::Vector3f& currentP, const Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
+	Eigen::Vector3f err = targetP - currentP; // Compute the error
+	Eigen::Vector3f pTargetP = 0.1 * err + currentP; // Compute the target position for the end effector
 
-	newTheta = currentTheta + 0.1 * J.transpose() * err;
-	IKSolver(targetP, err);
+	IKSolve(J, currentTheta, currentP, pTargetP, newTheta); // Call the iterative IK solver
 }
 
-void Character::IKSolver(const Eigen::VectorXf& targetP, Eigen::Vector3f err)
-{
-	// Initialize current joint angles
-	float threshold = 0.1;
-	// Initialize current end effector position
-	Eigen::VectorXf currentP(3);
-	currentP << Phand.x(), Phand.y(), Phand.z(); 
+void Character::IKSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::Vector3f& currentP, const Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
+	const float epsilon = 0.01; // Convergence threshold
+	const float k = 0.1; // Step size factor
 
-	// Compute Jacobian matrix
-	Eigen::MatrixXf J = computeJacobian(currentTheta);
+	Eigen::Vector3f err = targetP - currentP; // Compute the error
 
-	// Start iterative IK solver
 	do {
-		// Compute pseudoinverse of Jacobian
-		Eigen::MatrixXf J_pseudo =
-		pseudoinverse(J);
+		Eigen::VectorXf dX = k * err; // Take a step to reduce the error
+		Eigen::MatrixXf J_pseudo = pseudoinverse(J); // Compute the pseudoinverse of J
+		Eigen::VectorXf dQ = J_pseudo * dX; // Compute change in joint angles
 
-		// Compute error vector
-		Eigen::VectorXf err = targetP - currentP;
+		newTheta = currentTheta + dQ; // Update joint angles
+		Eigen::Vector3f P = computeHandPosition(newTheta); // Compute new end effector position
 
-		// Compute change in joint angles
-		Eigen::VectorXf dTheta = 0.1 * J_pseudo * err;
+		err = targetP - P; // Compute new error
+	} while (err.norm() > epsilon); // Repeat until error is below threshold
+}
 
-		// Update joint angles
-		currentTheta += dTheta;
+Eigen::Vector3f Character::computeHandPosition(const Eigen::VectorXf& theta)
+{
+	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
 
-		// Compute new end effector position
-		currentP = Troot.head<3>(); // Assuming only the translation part of Troot contributes to end effector position
+	// Apply rotations and translations to compute the final transformation matrix
+	for (int i = 0; i < theta.size(); ++i) {
+		if (i == 0 || i == 3) // x-axis rotation
+			transformation *= rotationX(theta(i));
+		else if (i == 1 || i == 4 || i == 5) // y-axis rotation
+			transformation *= rotationY(theta(i));
+		else if (i == 2 || i == 6) // z-axis rotation
+			transformation *= rotationZ(theta(i));
 
-		// Recompute Jacobian with updated joint angles
-		J = computeJacobian(currentTheta);
+		// Apply translations
+		if (i == 0) // Troot
+			transformation *= translationMatrix(Troot.head<3>()); // Use only the translation part of Troot
+		else if (i == 3) // Telbow
+			transformation *= translationMatrix(Tshoulder.head<3>()); // Use only the translation part of Tshoulder
+		else if (i == 6) // Twrist
+			transformation *= translationMatrix(Telbow.head<3>()); // Use only the translation part of Telbow
+	}
 
-		// Check convergence condition
-	} while (err.norm() > threshold);
+	// Compute the position of Phand by applying the final transformation to the origin
+	Eigen::Vector4f PhandPosition = transformation * Eigen::Vector4f::Zero();
+
+	// Return the position of Phand as a 3D vector
+	return PhandPosition.head<3>();
+}
+
+Eigen::Matrix4f Character::translationMatrix(const Eigen::Vector3f& translationVector)
+{
+	Eigen::Matrix4f translationMat = Eigen::Matrix4f::Identity();
+	translationMat.block<3, 1>(0, 3) = translationVector;
+	return translationMat;
 }
 
 void drawSquare(float x, float y, float z, float length) {

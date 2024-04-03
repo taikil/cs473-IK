@@ -20,6 +20,7 @@ class DrawingSimulator : public BaseSimulator
 {
 public:
 
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	DrawingSimulator(const std::string& name, Character* target, Hermite* spline);
 	~DrawingSimulator();
 
@@ -41,6 +42,7 @@ protected:
 	glm::dvec3 m_vel0; // initial velocity
 	glm::dvec3 m_pos;
 	glm::dvec3 m_vel;
+	Eigen::VectorXf currentTheta;
 
     double prevSec = 0.0;
 	double prevTime = 0.0;

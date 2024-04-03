@@ -5,6 +5,8 @@ DrawingSimulator::DrawingSimulator(const std::string& name, Character* target, H
 	character(target),
 	m_spline(spline)  // Add a member variable to store the spline
 {
+    Eigen::VectorXf currentTheta(7); // Assuming currentTheta is a vector of size 7
+    currentTheta << 0, 0, 0, 0, 0, 0, 0;
 }
 
 DrawingSimulator::~DrawingSimulator()
@@ -26,12 +28,23 @@ int DrawingSimulator::step(double time) // 0.01s
         animTcl::OutputMessage("The simulation time is %.3f, velocity is: %.3f m/s", time, velocity);
         prevSec = time;
     }
+    // Define the goal point (assuming it's stored in a variable named targetPoint)
+    Eigen::Vector3f targetPoint(0.0, 0.0, 0.0); // Example goal point coordinates
 
+    // Get the current position of the end effector
+    Eigen::Vector3f currentEndEffectorPos = character->computeHandPosition(currentTheta);
 
-	std::vector<float> theta;
-	theta.resize(7);
-	std::fill(theta.begin(), theta.end(), 0.0);
-	character->computeJacobian(theta);
+    // Compute the error between the current position and the goal point
+    Eigen::Vector3f error = targetPoint - currentEndEffectorPos;
+
+    // Compute the IK solution to minimize the error
+    Eigen::VectorXf newTheta;
+    character->IKSolve(character->computeJacobian(currentTheta), currentTheta, currentEndEffectorPos, targetPoint, newTheta);
+
+    // Update the character's joint angles with the new solution
+    for (int i = 0; i < 7; ++i) {
+        currentTheta(i) = newTheta(i);
+    }
 
     // Update the car's position using the translate function
 
