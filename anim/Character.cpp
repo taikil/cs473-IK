@@ -9,6 +9,9 @@ Character::Character(const std::string& name) :
 	Phand(0.8, 0.0, 0.0, 1.0)
 
 {
+	thetas = Eigen::VectorXf(7);
+	thetas << 0, 0, 0, 0, 0, 0, 0;
+	//thetas << 30, 30, 30, 30, 30, 30, 30;
 	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
 
@@ -43,13 +46,12 @@ void Character::reset(double time)
 }	// Character::Reset
 
 
-void Character::bob(Eigen::Vector4<float> translation) {
-	Troot = translation;
+void Character::setThetas(Eigen::MatrixXf newTheta) {
+	thetas = newTheta;
 }
 
-void Character::rotate(Eigen::Vector3<float>, double angleDegrees)
-{
-
+void Character::bob(Eigen::Vector4<float> translation) {
+	Troot = translation;
 }
 
 
@@ -180,8 +182,20 @@ void Character::drawArms() {
 				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
 				Eigen::Vector3f distance;
 				distance = Eigen::Vector3f(i == 0 ? -armLen[j] : armLen[j], 0, 0);
-				float rotation = i == 0 ? 0 : 0; // Right hand positive rotations
-				rotateFromBase(rotation, 0, 1, 0, distance);
+				if (j == 0 && i == 1) {
+					rotateFromBase(thetas[0], 1, 0, 0, distance);
+					rotateFromBase(thetas[1], 0, 1, 0, distance);
+					rotateFromBase(thetas[2], 0, 0, 1, distance);
+				}
+				else if (j == 1 && i == 1) {
+					rotateFromBase(thetas[3], 1, 0, 0, distance);
+					rotateFromBase(thetas[4], 0, 1, 0, distance);
+				}
+				else if (j == 2 && i == 1) {
+					rotateFromBase(thetas[5], 0, 1, 0, distance);
+					rotateFromBase(thetas[6], 0, 0, 1, distance);
+				}
+				//float rotation = i == 0 ? 0 : 0; // Right hand positive rotations
 				glPushMatrix();
 				{
 					j == 2 ? glScaled(0.4, 0.25, 0) : glScaled(1.0, 0.2, 0);
@@ -213,6 +227,9 @@ Eigen::Matrix4f Character::rotationX(float angle) {
 		0, cos(angle), -sin(angle),
 		0, sin(angle), cos(angle);
 	//glMultMatrixd(rotX.data());
+	std::stringstream rot;
+	rot << rotX << "\n\n\n";
+	OutputDebugStringA(rot.str().c_str());
 	return rotX;
 }
 
@@ -267,7 +284,7 @@ Eigen::MatrixXf Character::computeJacobian(const Eigen::MatrixXf theta) {
 	for (int i = 0; i < numThetas; ++i) {
 		if (i == 0 || i == 3) // x-axis rotation
 			transformation *= rotationX(theta(i));
-		else if (i  == 1 || i == 4 || i == 5) // y-axis rotation
+		else if (i == 1 || i == 4 || i == 5) // y-axis rotation
 			transformation *= rotationY(theta(i));
 		else if (i == 2 || i == 6) // z-axis rotation
 			transformation *= rotationZ(theta(i));
@@ -295,23 +312,42 @@ Eigen::MatrixXf Character::computeJacobian(const Eigen::MatrixXf theta) {
 		jacobian.col(i) = dEndEffectorPos_dTheta.head<3>();
 		animTcl::OutputMessage("Jacobian[%d]: (%f, %f, %f)", i, jacobian(0, i), jacobian(1, i), jacobian(2, i));
 	}
+
+	std::stringstream jac;
+	jac << jacobian << "\n\n\n";
+	OutputDebugStringA(jac.str().c_str());
 	return jacobian;
 }
 
 Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian) {
-	Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
-	Eigen::VectorXf x = lu.solve(jacobian);
-	return x;
+	std::stringstream jac;
+	jac << jacobian << "\n\n\n";
+	OutputDebugStringA(jac.str().c_str());
+	//Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
+	//Eigen::VectorXf x = lu.solve(jacobian);
+	//return x;
+	Eigen::MatrixXf pinv;
+
+	if (jacobian.rows() >= jacobian.cols()) {
+		// If the matrix has more rows than columns or is square, use the Moore-Penrose pseudoinverse
+		pinv = jacobian.completeOrthogonalDecomposition().pseudoInverse();
+	}
+	else {
+		// If the matrix has more columns than rows, compute the pseudoinverse of its transpose
+		pinv = jacobian.transpose().completeOrthogonalDecomposition().pseudoInverse();
+	}
+
+	return pinv;
 }
 
-void Character::IKSolver(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::Vector3f& currentP, const Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
+void Character::IKSolver(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
 	Eigen::Vector3f err = targetP - currentP; // Compute the error
 	Eigen::Vector3f pTargetP = 0.1 * err + currentP; // Compute the target position for the end effector
 
-	IKSolve(J, currentTheta, currentP, pTargetP, newTheta); // Call the iterative IK solver
+	IKSolveTranspose(J, currentTheta, currentP, pTargetP, newTheta); // Call the iterative IK solver
 }
 
-void Character::IKSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& currentTheta, const Eigen::Vector3f& currentP, const Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
+void Character::IKSolve(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
 	const float epsilon = 0.01; // Convergence threshold
 	const float k = 0.1; // Step size factor
 
@@ -327,6 +363,31 @@ void Character::IKSolve(const Eigen::MatrixXf& J, const Eigen::VectorXf& current
 
 		err = targetP - P; // Compute new error
 	} while (err.norm() > epsilon); // Repeat until error is below threshold
+}
+
+void Character::IKSolveTranspose(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
+	const float epsilon = 0.01; // Convergence threshold
+	const float k = 0.1; // Step size factor
+
+	Eigen::Vector3f err = targetP - currentP; // Compute the initial error
+
+	while (err.norm() > epsilon) {
+		// Compute Jacobian transpose
+		Eigen::MatrixXf J_transpose = J.transpose();
+
+		// Compute joint velocity using Jacobian transpose
+		Eigen::VectorXf dQ = k * J_transpose * err;
+
+		// Update joint angles
+		newTheta = currentTheta + dQ;
+
+		// Update end-effector position using the updated joint angles
+		Eigen::Vector3f newP = computeHandPosition(newTheta);
+
+		// Compute new error
+		err = targetP - newP;
+		J = computeJacobian(newTheta);
+	}
 }
 
 Eigen::Vector3f Character::computeHandPosition(const Eigen::VectorXf& theta)

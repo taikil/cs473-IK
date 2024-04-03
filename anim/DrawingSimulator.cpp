@@ -5,8 +5,8 @@ DrawingSimulator::DrawingSimulator(const std::string& name, Character* target, H
 	character(target),
 	m_spline(spline)  // Add a member variable to store the spline
 {
-    Eigen::VectorXf currentTheta(7); // Assuming currentTheta is a vector of size 7
-    currentTheta << 0, 0, 0, 0, 0, 0, 0;
+    currentTheta = Eigen::VectorXf(7);
+	currentTheta << 0, 0, 0, 0, 0, 0, 0;
 }
 
 DrawingSimulator::~DrawingSimulator()
@@ -39,17 +39,10 @@ int DrawingSimulator::step(double time) // 0.01s
 
     // Compute the IK solution to minimize the error
     Eigen::VectorXf newTheta;
-    character->IKSolve(character->computeJacobian(currentTheta), currentTheta, currentEndEffectorPos, targetPoint, newTheta);
+    character->IKSolver(character->computeJacobian(currentTheta), currentTheta, currentEndEffectorPos, targetPoint, newTheta);
 
     // Update the character's joint angles with the new solution
-    for (int i = 0; i < 7; ++i) {
-        currentTheta(i) = newTheta(i);
-    }
-
-    // Update the car's position using the translate function
-
-    // Assuming the car has a setState function to update its internal state
-    //m_object->setState(pos);
+    currentTheta = newTheta;
 
     return 0;
 
