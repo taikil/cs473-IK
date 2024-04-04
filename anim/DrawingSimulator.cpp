@@ -5,8 +5,6 @@ DrawingSimulator::DrawingSimulator(const std::string& name, Character* target, H
 	character(target),
 	m_spline(spline)  // Add a member variable to store the spline
 {
-    currentTheta = Eigen::VectorXf(7);
-	currentTheta << 0, 0, 0, 0, 0, 0, 0;
 }
 
 DrawingSimulator::~DrawingSimulator()
@@ -15,36 +13,51 @@ DrawingSimulator::~DrawingSimulator()
 
 int DrawingSimulator::step(double time) // 0.01s
 {
-    if (time == 0.1) {
-        velocity = 0.1;
-        distance = 0.0;
-        prevTime = 0.0;
-        prevSec = 0.0;
-    }
-    double timeStep = time - prevTime;
-    prevTime = time;
+	if (time == 0.1) {
+		velocity = 0.1;
+		distance = 0.0;
+		prevTime = 0.0;
+		prevSec = 0.0;
+	}
+	double timeStep = time - prevTime;
+	prevTime = time;
 
-    if (time - prevSec >= 1.0) {
-        animTcl::OutputMessage("The simulation time is %.3f, velocity is: %.3f m/s", time, velocity);
-        prevSec = time;
-    }
-    // Define the goal point (assuming it's stored in a variable named targetPoint)
-    Eigen::Vector3f targetPoint(0.0, 0.0, 0.0); // Example goal point coordinates
+	if (time - prevSec >= 1.0) {
+		animTcl::OutputMessage("The simulation time is %.3f, velocity is: %.3f m/s", time, velocity);
+		prevSec = time;
+	}
+	// Define the goal point (assuming it's stored in a variable named targetPoint)
+	Eigen::Vector3f targetPoint(0.0, 0.0, 0.0); // Example goal point coordinates
 
-    // Get the current position of the end effector
-    Eigen::Vector3f currentEndEffectorPos = character->computeHandPosition(currentTheta);
+	// Get the current position of the end effector
+	Eigen::Vector3f currentEndEffectorPos = character->computeHandPosition(currentTheta);
+	animTcl::OutputMessage("Current End Effector Position: (%f, %f, %f)",
+		currentEndEffectorPos.x(),
+		currentEndEffectorPos.y(),
+		currentEndEffectorPos.z());
 
-    // Compute the error between the current position and the goal point
-    Eigen::Vector3f error = targetPoint - currentEndEffectorPos;
+	// Compute the error between the current position and the goal point
+	Eigen::Vector3f error = targetPoint - currentEndEffectorPos;
 
-    // Compute the IK solution to minimize the error
-    Eigen::VectorXf newTheta;
-    character->IKSolver(character->computeJacobian(currentTheta), currentTheta, currentEndEffectorPos, targetPoint, newTheta);
+	// Compute the IK solution to minimize the error
+	Eigen::VectorXf newTheta;
+	character->IKSolver(character->computeJacobian(currentTheta), currentTheta, currentEndEffectorPos, targetPoint, newTheta);
 
-    // Update the character's joint angles with the new solution
-    currentTheta = newTheta;
+	// Update the character's joint angles with the new solution
+	currentTheta = newTheta;
 
-    return 0;
+	if (currentTheta.size() == 7) {
+		animTcl::OutputMessage("Current Theta:");
+		for (int i = 0; i < currentTheta.size(); ++i) {
+			animTcl::OutputMessage("Theta[%d]: %f", i, currentTheta[i]);
+		}
+	}
+	else {
+		animTcl::OutputMessage("Error: currentTheta is not of size 7, it is of size %d", currentTheta.size());
+	}
+	//character->setThetas(currentTheta);
+
+	return 0;
 
 }
 

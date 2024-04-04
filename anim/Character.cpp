@@ -181,19 +181,19 @@ void Character::drawArms() {
 			{
 				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
 				Eigen::Vector3f distance;
-				distance = Eigen::Vector3f(i == 0 ? -armLen[j] : armLen[j], 0, 0);
+				distance = Eigen::Vector3f(i == 0 ? -armLen(j) : armLen(j), 0, 0);
 				if (j == 0 && i == 1) {
-					rotateFromBase(thetas[0], 1, 0, 0, distance);
+					rotateFromBase(thetas(0), 1, 0, 0, distance);
 					rotateFromBase(thetas[1], 0, 1, 0, distance);
 					rotateFromBase(thetas[2], 0, 0, 1, distance);
 				}
 				else if (j == 1 && i == 1) {
-					rotateFromBase(thetas[3], 1, 0, 0, distance);
-					rotateFromBase(thetas[4], 0, 1, 0, distance);
+					rotateFromBase(thetas(3), 1, 0, 0, distance);
+					rotateFromBase(thetas(4), 0, 1, 0, distance);
 				}
 				else if (j == 2 && i == 1) {
-					rotateFromBase(thetas[5], 0, 1, 0, distance);
-					rotateFromBase(thetas[6], 0, 0, 1, distance);
+					rotateFromBase(thetas(5), 0, 1, 0, distance);
+					rotateFromBase(thetas(6), 0, 0, 1, distance);
 				}
 				//float rotation = i == 0 ? 0 : 0; // Right hand positive rotations
 				glPushMatrix();
@@ -368,11 +368,12 @@ void Character::IKSolve(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen
 void Character::IKSolveTranspose(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
 	const float epsilon = 0.01; // Convergence threshold
 	const float k = 0.1; // Step size factor
+	const int maxIterations = 1000; // Maximum number of iterations
 
 	Eigen::Vector3f err = targetP - currentP; // Compute the initial error
 
-	while (err.norm() > epsilon) {
-		// Compute Jacobian transpose
+	int iter = 0;
+	while (err.norm() > epsilon && iter < maxIterations) {
 		Eigen::MatrixXf J_transpose = J.transpose();
 
 		// Compute joint velocity using Jacobian transpose
@@ -387,6 +388,7 @@ void Character::IKSolveTranspose(Eigen::MatrixXf& J, Eigen::VectorXf& currentThe
 		// Compute new error
 		err = targetP - newP;
 		J = computeJacobian(newTheta);
+		iter++;
 	}
 }
 
@@ -394,15 +396,10 @@ Eigen::Vector3f Character::computeHandPosition(const Eigen::VectorXf& theta)
 {
 	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
 
-	// Apply rotations and translations to compute the final transformation matrix
-	for (int i = 0; i < theta.size(); ++i) {
-		if (i == 0 || i == 3) // x-axis rotation
-			transformation *= rotationX(theta(i));
-		else if (i == 1 || i == 4 || i == 5) // y-axis rotation
-			transformation *= rotationY(theta(i));
-		else if (i == 2 || i == 6) // z-axis rotation
-			transformation *= rotationZ(theta(i));
 
+	animTcl::OutputMessage("Error: THETA COMPUTE is not of size 7, it is of size %d", theta.rows());
+	// Apply rotations and translations to compute the final transformation matrix
+	for (int i = 0; i < theta.rows(); ++i) {
 		// Apply translations
 		if (i == 0) // Troot
 			transformation *= translationMatrix(Troot.head<3>()); // Use only the translation part of Troot
@@ -410,10 +407,17 @@ Eigen::Vector3f Character::computeHandPosition(const Eigen::VectorXf& theta)
 			transformation *= translationMatrix(Tshoulder.head<3>()); // Use only the translation part of Tshoulder
 		else if (i == 6) // Twrist
 			transformation *= translationMatrix(Telbow.head<3>()); // Use only the translation part of Telbow
+
+		if (i == 0 || i == 3) // x-axis rotation
+			transformation *= rotationX(theta(i));
+		else if (i == 1 || i == 4 || i == 5) // y-axis rotation
+			transformation *= rotationY(theta(i));
+		else if (i == 2 || i == 6) // z-axis rotation
+			transformation *= rotationZ(theta(i));
 	}
 
 	// Compute the position of Phand by applying the final transformation to the origin
-	Eigen::Vector4f PhandPosition = transformation * Eigen::Vector4f::Zero();
+	Eigen::Vector4f PhandPosition = transformation * Eigen::Vector4f(0, 0, 0, 1);
 
 	// Return the position of Phand as a 3D vector
 	return PhandPosition.head<3>();
@@ -423,6 +427,9 @@ Eigen::Matrix4f Character::translationMatrix(const Eigen::Vector3f& translationV
 {
 	Eigen::Matrix4f translationMat = Eigen::Matrix4f::Identity();
 	translationMat.block<3, 1>(0, 3) = translationVector;
+	std::stringstream jac;
+	jac << translationMat << "\n\n\n";
+	OutputDebugStringA(jac.str().c_str());
 	return translationMat;
 }
 
