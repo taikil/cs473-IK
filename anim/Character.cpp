@@ -10,8 +10,8 @@ Character::Character(const std::string& name) :
 
 {
 	thetas = Eigen::VectorXf(7);
-	thetas << 0, 0, 0, 0, 0, 0, 0;
-	//thetas << 30, 30, 30, 30, 30, 30, 30;
+	//thetas << 0, 0, 0, 0, 0, 0, 0;
+	thetas << PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6;
 	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
 
@@ -40,18 +40,18 @@ void Character::setState(double* p)
 
 void Character::reset(double time)
 {
-	double p[3] = { 0,0,0 };
-	setState(p);
-
+	bob(Eigen::Vector4f(0, 0, 2, 1));
 }	// Character::Reset
 
 
 void Character::setThetas(Eigen::MatrixXf newTheta) {
 	thetas = newTheta;
+	glutPostRedisplay();
 }
 
-void Character::bob(Eigen::Vector4<float> translation) {
+void Character::bob(Eigen::Vector4f translation) {
 	Troot = translation;
+	glutPostRedisplay();
 }
 
 
@@ -62,7 +62,7 @@ int Character::command(int argc, myCONST_SPEC char** argv)
 		animTcl::OutputMessage("system %s: wrong number of params.", m_name.c_str());
 		return TCL_ERROR;
 	}
-	else if (strcmp(argv[0], "translate") == 0)
+	else if (strcmp(argv[0], "position") == 0)
 	{
 		if (argc == 4)
 		{
@@ -70,7 +70,7 @@ int Character::command(int argc, myCONST_SPEC char** argv)
 		}
 		else
 		{
-			animTcl::OutputMessage("Usage: translate <x> <y> <z> ");
+			animTcl::OutputMessage("Usage: position <x> <y> <z> ");
 			return TCL_ERROR;
 
 		}
@@ -139,41 +139,6 @@ void Character::drawLegs() {
 }
 
 void Character::drawArms() {
-
-	glPushMatrix();
-
-	glPushMatrix();
-	glScaled(0.1, 0.1, 0.1);
-	glutSolidSphere(1, 20, 20);
-	glPopMatrix();
-
-	glTranslated(Tshoulder.x(), Tshoulder.y(), Tshoulder.z());
-	glPushMatrix();
-	glScaled(0.1, 0.1, 0.1);
-	glutSolidSphere(1, 20, 20);
-	glPopMatrix();
-
-	glTranslated(Telbow.x(), Telbow.y(), Telbow.z());
-	glPushMatrix();
-	glScaled(0.1, 0.1, 0.1);
-	glutSolidSphere(1, 20, 20);
-	glPopMatrix();
-
-
-	glTranslated(Twrist.x(), Twrist.y(), Twrist.z());
-	glPushMatrix();
-	glScaled(0.1, 0.1, 0.1);
-	glutSolidSphere(1, 20, 20);
-	glPopMatrix();
-
-	glTranslated(Phand.x(), Phand.y(), Phand.z());
-	glPushMatrix();
-	glScaled(0.1, 0.1, 0.1);
-	glutSolidSphere(1, 20, 20);
-	glPopMatrix();
-
-	glPopMatrix();
-
 	for (int i = 0; i < 2; i++) {
 		glPushMatrix();
 		for (int j = 0; j < 3; j++) {
@@ -182,20 +147,24 @@ void Character::drawArms() {
 				glTranslated(armPos(i, j), j == 0 ? 1.5 : 0, 0);
 				Eigen::Vector3f distance;
 				distance = Eigen::Vector3f(i == 0 ? -armLen(j) : armLen(j), 0, 0);
-				if (j == 0 && i == 1) {
-					rotateFromBase(thetas(0), 1, 0, 0, distance);
-					rotateFromBase(thetas[1], 0, 1, 0, distance);
-					rotateFromBase(thetas[2], 0, 0, 1, distance);
+				if (i == 1) {
+				if (j == 0) {
+					for (int i = 0; i < thetas.size(); ++i) {
+						animTcl::OutputMessage("Theta[%d]: %f", i, thetas(i));
+					}
+					rotateFromBase(thetas(0), 1, 0, 0, distance); // x
+					rotateFromBase(thetas(1), 0, 1, 0, distance); // y 
+					rotateFromBase(thetas(2), 0, 0, 1, distance); // z
 				}
-				else if (j == 1 && i == 1) {
-					rotateFromBase(thetas(3), 1, 0, 0, distance);
-					rotateFromBase(thetas(4), 0, 1, 0, distance);
+				else if (j == 1) {
+					rotateFromBase(thetas(3), 1, 0, 0, distance); // x
+					rotateFromBase(thetas(4), 0, 1, 0, distance); // y
 				}
-				else if (j == 2 && i == 1) {
-					rotateFromBase(thetas(5), 0, 1, 0, distance);
-					rotateFromBase(thetas(6), 0, 0, 1, distance);
+				else {
+					rotateFromBase(thetas(5), 0, 1, 0, distance); // y
+					rotateFromBase(thetas(6), 0, 0, 1, distance); // z
 				}
-				//float rotation = i == 0 ? 0 : 0; // Right hand positive rotations
+				}
 				glPushMatrix();
 				{
 					j == 2 ? glScaled(0.4, 0.25, 0) : glScaled(1.0, 0.2, 0);
@@ -213,12 +182,10 @@ void Character::drawArms() {
 }
 
 void Character::rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance) {
-	glTranslatef(-distance.x(), -distance.y(), -distance.z());
-	glRotatef(angle, x, y, z);
-	//x == 1 ? rotationX(angle) : void(0);
-	//y == 1 ? rotationY(angle) : void(0);
-	//z == 1 ? rotationZ(angle) : void(0);
-	glTranslatef(distance.x(), distance.y(), distance.z());
+	//glTranslatef(-distance.x(), -distance.y(), -distance.z());
+	float radians = angle * (PI / 180);
+	glRotatef(radians, x, y, z);
+	//glTranslatef(distance.x(), distance.y(), distance.z());
 }
 
 Eigen::Matrix4f Character::rotationX(float angle) {
@@ -226,10 +193,6 @@ Eigen::Matrix4f Character::rotationX(float angle) {
 	rotX.block<3, 3>(0, 0) << 1, 0, 0,
 		0, cos(angle), -sin(angle),
 		0, sin(angle), cos(angle);
-	//glMultMatrixd(rotX.data());
-	std::stringstream rot;
-	rot << rotX << "\n\n\n";
-	OutputDebugStringA(rot.str().c_str());
 	return rotX;
 }
 
@@ -298,7 +261,6 @@ Eigen::MatrixXf Character::computeJacobian(const Eigen::MatrixXf theta) {
 		else if (i == 6) // Twrist
 			endEffectorPos += Troot + Tshoulder + Telbow;
 
-		// Compute the derivative of end effector position w.r.t. the current joint angle
 		Eigen::Vector4f dEndEffectorPos_dTheta = transformation * rotationXDerivative(theta(i)) * Eigen::Vector4f::Zero();
 
 		if (i == 0) // Troot
@@ -308,87 +270,75 @@ Eigen::MatrixXf Character::computeJacobian(const Eigen::MatrixXf theta) {
 		else if (i == 6) // Twrist
 			dEndEffectorPos_dTheta.head<3>() += Troot.head<3>() + Tshoulder.head<3>() + Telbow.head<3>();
 
-		// Fill in the corresponding column of the Jacobian matrix **
 		jacobian.col(i) = dEndEffectorPos_dTheta.head<3>();
-		animTcl::OutputMessage("Jacobian[%d]: (%f, %f, %f)", i, jacobian(0, i), jacobian(1, i), jacobian(2, i));
+		//animTcl::OutputMessage("Jacobian[%d]: (%f, %f, %f)", i, jacobian(0, i), jacobian(1, i), jacobian(2, i));
 	}
 
-	std::stringstream jac;
-	jac << jacobian << "\n\n\n";
-	OutputDebugStringA(jac.str().c_str());
+	//for (int i = 0; i < jacobian.rows(); ++i) {
+	//	for (int j = 0; j < jacobian.cols(); ++j) {
+	//		animTcl::OutputMessage("Jacobian(%d, %d): %f", i, j, jacobian(i, j));
+	//	}
+	//}
+
 	return jacobian;
 }
 
 Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian) {
-	std::stringstream jac;
-	jac << jacobian << "\n\n\n";
-	OutputDebugStringA(jac.str().c_str());
-	//Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
-	//Eigen::VectorXf x = lu.solve(jacobian);
-	//return x;
-	Eigen::MatrixXf pinv;
-
-	if (jacobian.rows() >= jacobian.cols()) {
-		// If the matrix has more rows than columns or is square, use the Moore-Penrose pseudoinverse
-		pinv = jacobian.completeOrthogonalDecomposition().pseudoInverse();
-	}
-	else {
-		// If the matrix has more columns than rows, compute the pseudoinverse of its transpose
-		pinv = jacobian.transpose().completeOrthogonalDecomposition().pseudoInverse();
-	}
-
-	return pinv;
+	Eigen::PartialPivLU<Eigen::MatrixXf> lu(jacobian);
+	Eigen::VectorXf x = lu.solve(jacobian);
+	return x;
 }
 
 void Character::IKSolver(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
-	Eigen::Vector3f err = targetP - currentP; // Compute the error
-	Eigen::Vector3f pTargetP = 0.1 * err + currentP; // Compute the target position for the end effector
+	Eigen::Vector3f err = targetP - currentP;
+	Eigen::Vector3f pTargetP = (0.1 * err) + currentP;
 
-	IKSolveTranspose(J, currentTheta, currentP, pTargetP, newTheta); // Call the iterative IK solver
+	IKSolveTranspose(J, currentTheta, currentP, pTargetP, newTheta);
 }
 
 void Character::IKSolve(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
-	const float epsilon = 0.01; // Convergence threshold
-	const float k = 0.1; // Step size factor
+	const float epsilon = 0.01;
+	const float k = 0.1;
 
-	Eigen::Vector3f err = targetP - currentP; // Compute the error
+	Eigen::Vector3f err = targetP - currentP;
 
 	do {
-		Eigen::VectorXf dX = k * err; // Take a step to reduce the error
-		Eigen::MatrixXf J_pseudo = pseudoinverse(J); // Compute the pseudoinverse of J
-		Eigen::VectorXf dQ = J_pseudo * dX; // Compute change in joint angles
+		Eigen::Vector3f dX = k * err;
+		Eigen::MatrixXf J_pseudo = pseudoinverse(J);
+		Eigen::VectorXf dQ = J_pseudo * dX;
 
-		newTheta = currentTheta + dQ; // Update joint angles
-		Eigen::Vector3f P = computeHandPosition(newTheta); // Compute new end effector position
+		newTheta = currentTheta + dQ;
+		Eigen::Vector3f P = computeHandPosition(newTheta);
 
-		err = targetP - P; // Compute new error
-	} while (err.norm() > epsilon); // Repeat until error is below threshold
+		err = targetP - P;
+	} while (err.norm() > epsilon);
 }
 
 void Character::IKSolveTranspose(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
-	const float epsilon = 0.01; // Convergence threshold
-	const float k = 0.1; // Step size factor
-	const int maxIterations = 1000; // Maximum number of iterations
+	const float epsilon = 0.01;
+	const float k = 0.1;
+	const int maxIterations = 100;
 
-	Eigen::Vector3f err = targetP - currentP; // Compute the initial error
+	Eigen::Vector3f err = targetP - currentP;
 
 	int iter = 0;
 	while (err.norm() > epsilon && iter < maxIterations) {
+		Eigen::Vector3f dX = k * err;
 		Eigen::MatrixXf J_transpose = J.transpose();
 
-		// Compute joint velocity using Jacobian transpose
-		Eigen::VectorXf dQ = k * J_transpose * err;
+		Eigen::VectorXf dQ = J_transpose * dX;
 
-		// Update joint angles
 		newTheta = currentTheta + dQ;
 
-		// Update end-effector position using the updated joint angles
 		Eigen::Vector3f newP = computeHandPosition(newTheta);
 
-		// Compute new error
+
 		err = targetP - newP;
 		J = computeJacobian(newTheta);
 		iter++;
+	}
+	if (iter == maxIterations) {
+		animTcl::OutputMessage("MAX ITERATIONS!!!!");
 	}
 }
 
@@ -397,16 +347,13 @@ Eigen::Vector3f Character::computeHandPosition(const Eigen::VectorXf& theta)
 	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
 
 
-	animTcl::OutputMessage("Error: THETA COMPUTE is not of size 7, it is of size %d", theta.rows());
-	// Apply rotations and translations to compute the final transformation matrix
 	for (int i = 0; i < theta.rows(); ++i) {
-		// Apply translations
 		if (i == 0) // Troot
-			transformation *= translationMatrix(Troot.head<3>()); // Use only the translation part of Troot
+			transformation *= translationMatrix(Troot.head<3>());
 		else if (i == 3) // Telbow
-			transformation *= translationMatrix(Tshoulder.head<3>()); // Use only the translation part of Tshoulder
+			transformation *= translationMatrix(Tshoulder.head<3>());
 		else if (i == 6) // Twrist
-			transformation *= translationMatrix(Telbow.head<3>()); // Use only the translation part of Telbow
+			transformation *= translationMatrix(Telbow.head<3>());
 
 		if (i == 0 || i == 3) // x-axis rotation
 			transformation *= rotationX(theta(i));
@@ -416,10 +363,8 @@ Eigen::Vector3f Character::computeHandPosition(const Eigen::VectorXf& theta)
 			transformation *= rotationZ(theta(i));
 	}
 
-	// Compute the position of Phand by applying the final transformation to the origin
 	Eigen::Vector4f PhandPosition = transformation * Eigen::Vector4f(0, 0, 0, 1);
 
-	// Return the position of Phand as a 3D vector
 	return PhandPosition.head<3>();
 }
 
@@ -427,9 +372,6 @@ Eigen::Matrix4f Character::translationMatrix(const Eigen::Vector3f& translationV
 {
 	Eigen::Matrix4f translationMat = Eigen::Matrix4f::Identity();
 	translationMat.block<3, 1>(0, 3) = translationVector;
-	std::stringstream jac;
-	jac << translationMat << "\n\n\n";
-	OutputDebugStringA(jac.str().c_str());
 	return translationMat;
 }
 
@@ -504,4 +446,5 @@ void Character::display(GLenum mode)
 	glPopAttrib();
 
 }	// Character::display
+
 

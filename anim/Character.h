@@ -35,7 +35,7 @@ public:
 	virtual void setState(double* p);
 	void reset(double time);
 
-	void bob(Eigen::Vector4<float> translation);
+	void bob(Eigen::Vector4f translation);
 
 	void display(GLenum mode = GL_RENDER);
 
@@ -62,6 +62,7 @@ public:
 	Eigen::Vector3f computeHandPosition(const Eigen::VectorXf& theta);
 	Eigen::Matrix4f translationMatrix(const Eigen::Vector3f& translationVector);
 	void setThetas(Eigen::MatrixXf newTheta);
+
 
 
 protected:

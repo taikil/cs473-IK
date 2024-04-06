@@ -100,7 +100,7 @@ void MakeScene(void)
 	// register a system
 	Hermite* hermiteSystem;
 	hermiteSystem = new Hermite("hermite");
-	Character* char1 = new Character("artist");
+	Character* char1 = new Character("bob");
 
 	success = GlobalResourceManager::use()->addSystem(hermiteSystem, true );
 	assert( success );
@@ -131,7 +131,7 @@ void MakeScene(void)
 
 
 	sampleSystemRetrieval = 
-		GlobalResourceManager::use()->getSystem( "artist" );
+		GlobalResourceManager::use()->getSystem( "bob" );
 	assert( sampleSystemRetrieval );
 
 	BaseSimulator* sampleSimulatorRetrieval;

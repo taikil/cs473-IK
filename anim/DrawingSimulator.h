@@ -29,13 +29,11 @@ public:
 	int init(double time)
 	{
 		currentTheta.resize(7);
-
-		currentTheta.setZero();
-
-		animTcl::OutputMessage("Initialized currentTheta with size %d", currentTheta.size());
+		//currentTheta.setZero();
+		currentTheta << PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6;
 		return 0;
 	};
-
+	void reset(double time);
 	int command(int argc, myCONST_SPEC char** argv);
 
 protected:
