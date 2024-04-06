@@ -10,8 +10,8 @@ Character::Character(const std::string& name) :
 
 {
 	thetas = Eigen::VectorXf(7);
-	//thetas << 0, 0, 0, 0, 0, 0, 0;
-	thetas << PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6;
+	thetas << 0, 0, 0, 0, 0, 0, 0;
+	//thetas << PI / 12, PI / 12, PI / 12, PI / 12, PI / 12, PI / 12, PI / 12;
 	armPos << -1.666, -2.0, -1.4,
 		1.666, 2.0, 1.4;
 
@@ -149,9 +149,6 @@ void Character::drawArms() {
 				distance = Eigen::Vector3f(i == 0 ? -armLen(j) : armLen(j), 0, 0);
 				if (i == 1) {
 					if (j == 0) {
-						for (int i = 0; i < thetas.size(); ++i) {
-							animTcl::OutputMessage("Theta[%d]: %f", i, thetas(i));
-						}
 						rotateFromBase(thetas(0), 1, 0, 0, distance); // x
 						rotateFromBase(thetas(1), 0, 1, 0, distance); // y 
 						rotateFromBase(thetas(2), 0, 0, 1, distance); // z
@@ -184,8 +181,6 @@ void Character::drawArms() {
 void Character::rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance) {
 	glTranslatef(-distance.x(), -distance.y(), -distance.z());
 	float degrees = angle * (180 / PI);
-
-	animTcl::OutputMessage("RADIANS: %f", degrees);
 
 	glRotatef(degrees, x, y, z);
 	glTranslatef(distance.x(), distance.y(), distance.z());
@@ -295,7 +290,6 @@ Eigen::MatrixXf Character::pseudoinverse(Eigen::MatrixXf jacobian) {
 void Character::IKSolver(Eigen::MatrixXf& J, Eigen::VectorXf& currentTheta, Eigen::Vector3f& currentP, Eigen::Vector3f& targetP, Eigen::VectorXf& newTheta) {
 	Eigen::Vector3f err = targetP - currentP;
 	Eigen::Vector3f pTargetP = (0.1 * err) + currentP;
-
 	IKSolveTranspose(J, currentTheta, currentP, pTargetP, newTheta);
 }
 
@@ -339,9 +333,6 @@ void Character::IKSolveTranspose(Eigen::MatrixXf& J, Eigen::VectorXf& currentThe
 		err = targetP - newP;
 		J = computeJacobian(newTheta);
 		iter++;
-	}
-	if (iter == maxIterations) {
-		animTcl::OutputMessage("MAX ITERATIONS!!!!");
 	}
 }
 

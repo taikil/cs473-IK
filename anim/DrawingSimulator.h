@@ -29,8 +29,8 @@ public:
 	int init(double time)
 	{
 		currentTheta.resize(7);
-		//currentTheta.setZero();
-		currentTheta << PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6, PI / 6;
+		currentTheta.setZero();
+		//currentTheta << PI / 12, PI / 12, PI / 12, PI / 12, PI / 12, PI / 12, PI / 12;
 		return 0;
 	};
 	void reset(double time);
@@ -39,7 +39,11 @@ public:
 protected:
 
 	Eigen::VectorXf currentTheta;
+	Eigen::Vector3f targetPoint;
+	Eigen::MatrixXf jacobian;
+	Eigen::Vector3f currentEndEffectorPos;
 
+	bool splineLoaded = false;
 	double prevSec = 0.0;
 	double prevTime = 0.0;
 	double velocity = 0.1; // m/s (initial)

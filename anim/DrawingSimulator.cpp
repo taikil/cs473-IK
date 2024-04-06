@@ -27,17 +27,26 @@ int DrawingSimulator::step(double time) // 0.01s
 		prevSec = time;
 	}
 
-	Eigen::Vector3f targetPoint(0.0, 0.0, 0.0); // Example goal point coordinates
+	distance += timeStep;
+	distance = std::min(distance, 1.0);
+	if (distance == 1.0) distance = 0;
 
-	Eigen::Vector3f currentEndEffectorPos = character->computeHandPosition(currentTheta);
+	currentEndEffectorPos = character->computeHandPosition(currentTheta);
+	if (splineLoaded) {
+		VectorObj curTarget;
+		m_spline->getPoint(curTarget, distance);
+		targetPoint = Eigen::Vector3f(curTarget[0], curTarget[1], curTarget[2]); // Example goal point coordinates
+	}
+	else {
+		targetPoint = Eigen::Vector3f(0, 0, 0);
+	}
 
-	// Compute the IK solution to minimize the error
 	Eigen::VectorXf newTheta;
-	Eigen::MatrixXf jacobian = character->computeJacobian(currentTheta);
+	Eigen::MatrixXf curJacobian = character->computeJacobian(currentTheta);
+	jacobian = curJacobian;
 
 	character->IKSolver(jacobian, currentTheta, currentEndEffectorPos, targetPoint, newTheta);
 
-	// Update the character's joint angles with the new solution
 	currentTheta = newTheta;
 
 	character->setThetas(currentTheta);
@@ -68,6 +77,13 @@ int DrawingSimulator::command(int argc, myCONST_SPEC char** argv)
 		{
 			glScalef(0.5, 0.5, 0.5);
 			m_spline->loadFromFile2D(argv[1]);
+			splineLoaded = true;
+			currentTheta = Eigen::VectorXf(7);
+			currentTheta << 0, 0, -PI / 4, 0, PI / 24, PI / 24, PI / 24;
+			character->setThetas(currentTheta);
+			Eigen::MatrixXf curJacobian = character->computeJacobian(currentTheta);
+			jacobian = curJacobian;
+			currentEndEffectorPos = character->computeHandPosition(currentTheta);
 		}
 		else
 		{
