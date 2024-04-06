@@ -148,22 +148,22 @@ void Character::drawArms() {
 				Eigen::Vector3f distance;
 				distance = Eigen::Vector3f(i == 0 ? -armLen(j) : armLen(j), 0, 0);
 				if (i == 1) {
-				if (j == 0) {
-					for (int i = 0; i < thetas.size(); ++i) {
-						animTcl::OutputMessage("Theta[%d]: %f", i, thetas(i));
+					if (j == 0) {
+						for (int i = 0; i < thetas.size(); ++i) {
+							animTcl::OutputMessage("Theta[%d]: %f", i, thetas(i));
+						}
+						rotateFromBase(thetas(0), 1, 0, 0, distance); // x
+						rotateFromBase(thetas(1), 0, 1, 0, distance); // y 
+						rotateFromBase(thetas(2), 0, 0, 1, distance); // z
 					}
-					rotateFromBase(thetas(0), 1, 0, 0, distance); // x
-					rotateFromBase(thetas(1), 0, 1, 0, distance); // y 
-					rotateFromBase(thetas(2), 0, 0, 1, distance); // z
-				}
-				else if (j == 1) {
-					rotateFromBase(thetas(3), 1, 0, 0, distance); // x
-					rotateFromBase(thetas(4), 0, 1, 0, distance); // y
-				}
-				else {
-					rotateFromBase(thetas(5), 0, 1, 0, distance); // y
-					rotateFromBase(thetas(6), 0, 0, 1, distance); // z
-				}
+					else if (j == 1) {
+						rotateFromBase(thetas(3), 1, 0, 0, distance); // x
+						rotateFromBase(thetas(4), 0, 1, 0, distance); // y
+					}
+					else {
+						rotateFromBase(thetas(5), 0, 1, 0, distance); // y
+						rotateFromBase(thetas(6), 0, 0, 1, distance); // z
+					}
 				}
 				glPushMatrix();
 				{
@@ -182,10 +182,13 @@ void Character::drawArms() {
 }
 
 void Character::rotateFromBase(float angle, int x, int y, int z, Eigen::Vector3f distance) {
-	//glTranslatef(-distance.x(), -distance.y(), -distance.z());
-	float radians = angle * (PI / 180);
-	glRotatef(radians, x, y, z);
-	//glTranslatef(distance.x(), distance.y(), distance.z());
+	glTranslatef(-distance.x(), -distance.y(), -distance.z());
+	float degrees = angle * (180 / PI);
+
+	animTcl::OutputMessage("RADIANS: %f", degrees);
+
+	glRotatef(degrees, x, y, z);
+	glTranslatef(distance.x(), distance.y(), distance.z());
 }
 
 Eigen::Matrix4f Character::rotationX(float angle) {
